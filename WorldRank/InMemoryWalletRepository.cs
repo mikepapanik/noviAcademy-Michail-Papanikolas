@@ -30,4 +30,9 @@ public class InMemoryWalletRepository : IWalletRepository
 
         return wallets;
     }
+
+    public Wallet? FindByPlayer(int playerId)
+    {
+        return GetByPlayer(playerId).FirstOrDefault();
+    }
 }

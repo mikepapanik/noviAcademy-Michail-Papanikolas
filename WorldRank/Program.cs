@@ -14,6 +14,10 @@ while (true)
     Console.WriteLine("6. Group players by score");
     Console.WriteLine("7. Add wallet to player");
     Console.WriteLine("8. List wallets by player");
+    Console.WriteLine("9. Deposit to wallet");
+    Console.WriteLine("10. Withdraw from wallet");
+    Console.WriteLine("11. Block wallet");
+    Console.WriteLine("12. Unblock wallet");
     Console.WriteLine("0. Exit");
     Console.Write("> ");
 
@@ -27,6 +31,10 @@ while (true)
         "6" => GroupPlayersByScore,
         "7" => AddWalletToPlayer,
         "8" => ListWalletsByPlayer,
+        "9" => DepositToWallet,
+        "10" => WithdrawFromWallet,
+        "11" => BlockWallet,
+        "12" => UnblockWallet,
         "0" => null,
         _ => () => Console.WriteLine("Unknown option.")
     };
@@ -241,4 +249,145 @@ void ListWalletsByPlayer()
     {
         Console.WriteLine(wallet);
     }
+}
+
+void DepositToWallet()
+{
+    Console.Write("Player id: ");
+    var playerIdInput = Console.ReadLine();
+
+    if (!int.TryParse(playerIdInput, out var playerId))
+    {
+        Console.WriteLine("Player id must be a whole number.");
+        return;
+    }
+
+    var wallet = ChooseWallet(playerId);
+
+    if (wallet is null)
+        return;
+
+    Console.Write("Amount to deposit: ");
+    var amountInput = Console.ReadLine();
+
+    if (!decimal.TryParse(amountInput, out var amount))
+    {
+        Console.WriteLine("Amount must be a number.");
+        return;
+    }
+
+    try
+    {
+        wallet.Deposit(amount);
+        Console.WriteLine("Deposit completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.Message);
+    }
+}
+
+void WithdrawFromWallet()
+{
+    Console.Write("Player id: ");
+    var playerIdInput = Console.ReadLine();
+
+    if (!int.TryParse(playerIdInput, out var playerId))
+    {
+        Console.WriteLine("Player id must be a whole number.");
+        return;
+    }
+
+    var wallet = ChooseWallet(playerId);
+
+    if (wallet is null)
+        return;
+
+    Console.Write("Amount to withdraw: ");
+    var amountInput = Console.ReadLine();
+
+    if (!decimal.TryParse(amountInput, out var amount))
+    {
+        Console.WriteLine("Amount must be a number.");
+        return;
+    }
+
+    try
+    {
+        wallet.Withdraw(amount);
+        Console.WriteLine("Withdraw completed successfully.");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine(ex.Message);
+    }
+}
+
+void BlockWallet()
+{
+    Console.Write("Player id: ");
+    var playerIdInput = Console.ReadLine();
+
+    if (!int.TryParse(playerIdInput, out var playerId))
+    {
+        Console.WriteLine("Player id must be a whole number.");
+        return;
+    }
+
+    var wallet = ChooseWallet(playerId);
+
+    if (wallet is null)
+        return;
+
+    wallet.Block();
+    Console.WriteLine("Wallet blocked successfully.");
+}
+
+void UnblockWallet()
+{
+    Console.Write("Player id: ");
+    var playerIdInput = Console.ReadLine();
+
+    if (!int.TryParse(playerIdInput, out var playerId))
+    {
+        Console.WriteLine("Player id must be a whole number.");
+        return;
+    }
+
+    var wallet = ChooseWallet(playerId);
+
+    if (wallet is null)
+        return;
+
+    wallet.Unblock();
+    Console.WriteLine("Wallet unblocked successfully.");
+}
+
+Wallet? ChooseWallet(int playerId)
+{
+    var wallets = walletRepository.GetByPlayer(playerId).ToList();
+
+    if (!wallets.Any())
+    {
+        Console.WriteLine("No wallets found for this player.");
+        return null;
+    }
+
+    for (int i = 0; i < wallets.Count; i++)
+    {
+        Console.WriteLine($"{i + 1}. {wallets[i]}");
+    }
+
+    Console.Write("Choose wallet: ");
+    var choiceInput = Console.ReadLine();
+
+    if (!int.TryParse(choiceInput, out var choice) ||
+        choice < 1 ||
+        choice > wallets.Count)
+    {
+        Console.WriteLine("Invalid wallet choice.");
+        return null;
+    }
+
+    return wallets[choice - 1];
 }

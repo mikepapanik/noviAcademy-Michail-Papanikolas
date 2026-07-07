@@ -50,6 +50,11 @@ public class Wallet
         IsBlocked = true;
     }
 
+    public void Unblock()
+    {
+        IsBlocked = false;
+    }
+
     public override string ToString()
     {
         return $"PlayerId: {PlayerId} | Balance: {Balance} {Currency} | Blocked: {IsBlocked}";
