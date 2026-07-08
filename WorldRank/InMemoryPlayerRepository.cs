@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WorldRank.Exceptions;
 
 namespace WorldRank;
 
@@ -11,7 +12,7 @@ public class InMemoryPlayerRepository : IPlayerRepository
     public void AddPlayer(Player player)
     {
         if (!_players.TryAdd(player.Id, player))
-            throw new InvalidOperationException("Player with this id already exists.");
+            throw new PlayerAlreadyExistsException(player.Id);
     }
 
     public Player? FindPlayer(int playerId)

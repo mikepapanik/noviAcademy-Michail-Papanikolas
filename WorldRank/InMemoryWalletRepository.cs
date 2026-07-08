@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using WorldRank.Exceptions;
 
 namespace WorldRank;
 
@@ -17,6 +18,9 @@ public class InMemoryWalletRepository : IWalletRepository
         {
             _walletsByPlayer[playerId] = new List<Wallet>();
         }
+
+        if (_walletsByPlayer[playerId].Any(w => w.Currency == wallet.Currency))
+            throw new DuplicateWalletCurrencyException(wallet.Currency);
 
         _walletsByPlayer[playerId].Add(wallet);
     }

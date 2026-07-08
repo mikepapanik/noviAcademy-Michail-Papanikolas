@@ -1,4 +1,5 @@
 using System;
+using WorldRank.Exceptions;
 
 namespace WorldRank;
 
@@ -23,7 +24,7 @@ public class Wallet
     public void Deposit(decimal amount)
     {
         if (IsBlocked)
-            throw new InvalidOperationException("Wallet is blocked.");
+            throw new WalletBlockedException(PlayerId);
 
         if (amount <= 0)
             throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
@@ -34,13 +35,13 @@ public class Wallet
     public void Withdraw(decimal amount)
     {
         if (IsBlocked)
-            throw new InvalidOperationException("Wallet is blocked.");
+            throw new WalletBlockedException(PlayerId);
 
         if (amount <= 0)
             throw new ArgumentOutOfRangeException(nameof(amount), "Amount must be positive.");
 
         if (Balance - amount < 0)
-            throw new InvalidOperationException("Balance cannot be negative.");
+            throw new InsufficientFundsException(Balance, amount);
 
         Balance -= amount;
     }
@@ -48,6 +49,11 @@ public class Wallet
     public void Block()
     {
         IsBlocked = true;
+    }
+
+    public void Unblock()
+    {
+        IsBlocked = false;
     }
 
     public override string ToString()
