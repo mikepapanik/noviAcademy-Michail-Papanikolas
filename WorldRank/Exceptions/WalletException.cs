@@ -1,0 +1,15 @@
+using System;
+
+namespace WorldRank.Exceptions;
+
+public class WalletException : Exception
+{
+    public WalletException(string message) : base(message)
+    {
+    }
+
+    public WalletException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+}

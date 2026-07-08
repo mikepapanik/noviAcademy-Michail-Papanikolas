@@ -1,7 +1,12 @@
-﻿using WorldRank;
+﻿using NLog;
+using WorldRank;
+using WorldRank.Exceptions;
 
 IPlayerRepository playerRepository = new InMemoryPlayerRepository();
 IWalletRepository walletRepository = new InMemoryWalletRepository();
+
+var logger = LogManager.GetCurrentClassLogger();
+logger.Info("WorldRank application started.");
 
 while (true)
 {
@@ -40,7 +45,11 @@ while (true)
     };
 
     if (action is null)
+    {
+        logger.Info("WorldRank application stopped.");
+        LogManager.Shutdown();
         return;
+    }
 
     action();
 }
@@ -79,10 +88,12 @@ void AddPlayer()
     try
     {
         playerRepository.AddPlayer(player);
+        logger.Info("Player {PlayerId} added with score {Score}", id, score);
         Console.WriteLine("Player added successfully.");
     }
-    catch (InvalidOperationException ex)
+    catch (Exception ex)
     {
+        logger.Error(ex, "Failed to add player {PlayerId}", id);
         Console.WriteLine(ex.Message);
     }
 }
@@ -160,6 +171,7 @@ void DeletePlayer()
         return;
     }
 
+    logger.Info("Player {PlayerId} deleted", id);
     Console.WriteLine("Player deleted successfully.");
 }
 
@@ -218,10 +230,17 @@ void AddWalletToPlayer()
     try
     {
         walletRepository.Add(wallet, playerId);
+        logger.Info("Wallet added for player {PlayerId} with currency {Currency}", playerId, currency);
         Console.WriteLine("Wallet added successfully.");
     }
-    catch (InvalidOperationException ex)
+    catch (WalletException ex)
     {
+        logger.Error(ex, "Failed to add wallet for player {PlayerId} with currency {Currency}", playerId, currency);
+        Console.WriteLine(ex.Message);
+    }
+    catch (Exception ex)
+    {
+        logger.Error(ex, "Unexpected error while adding wallet for player {PlayerId}", playerId);
         Console.WriteLine(ex.Message);
     }
 }
@@ -279,10 +298,17 @@ void DepositToWallet()
     try
     {
         wallet.Deposit(amount);
+        logger.Info("Deposit {Amount} completed for player {PlayerId} with currency {Currency}", amount, playerId, wallet.Currency);
         Console.WriteLine("Deposit completed successfully.");
+    }
+    catch (WalletException ex)
+    {
+        logger.Error(ex, "Deposit failed for player {PlayerId} with amount {Amount}", playerId, amount);
+        Console.WriteLine(ex.Message);
     }
     catch (Exception ex)
     {
+        logger.Error(ex, "Unexpected error during deposit for player {PlayerId}", playerId);
         Console.WriteLine(ex.Message);
     }
 }
@@ -315,10 +341,17 @@ void WithdrawFromWallet()
     try
     {
         wallet.Withdraw(amount);
+        logger.Info("Withdrawal {Amount} completed for player {PlayerId} with currency {Currency}", amount, playerId, wallet.Currency);
         Console.WriteLine("Withdraw completed successfully.");
+    }
+    catch (WalletException ex)
+    {
+        logger.Error(ex, "Withdrawal failed for player {PlayerId} with amount {Amount}", playerId, amount);
+        Console.WriteLine(ex.Message);
     }
     catch (Exception ex)
     {
+        logger.Error(ex, "Unexpected error during withdrawal for player {PlayerId}", playerId);
         Console.WriteLine(ex.Message);
     }
 }
@@ -340,6 +373,7 @@ void BlockWallet()
         return;
 
     wallet.Block();
+    logger.Info("Wallet blocked for player {PlayerId} with currency {Currency}", playerId, wallet.Currency);
     Console.WriteLine("Wallet blocked successfully.");
 }
 
@@ -360,6 +394,7 @@ void UnblockWallet()
         return;
 
     wallet.Unblock();
+    logger.Info("Wallet unblocked for player {PlayerId} with currency {Currency}", playerId, wallet.Currency);
     Console.WriteLine("Wallet unblocked successfully.");
 }
 
