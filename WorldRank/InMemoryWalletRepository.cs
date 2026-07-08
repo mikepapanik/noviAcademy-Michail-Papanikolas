@@ -18,6 +18,9 @@ public class InMemoryWalletRepository : IWalletRepository
             _walletsByPlayer[playerId] = new List<Wallet>();
         }
 
+        if (_walletsByPlayer[playerId].Any(w => w.Currency == wallet.Currency))
+            throw new InvalidOperationException("Player already has a wallet with this currency.");
+
         _walletsByPlayer[playerId].Add(wallet);
     }
 
