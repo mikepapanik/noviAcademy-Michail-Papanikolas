@@ -1,5 +1,6 @@
 using NLog;
 using WorldRank.Domain.Exceptions;
+using WorldRankRank.Application.Interfaces;
 using WorldRank.Domain.Enums;
 using WorldRank.Domain.Wallets;
 
