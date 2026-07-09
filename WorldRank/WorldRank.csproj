@@ -2,13 +2,19 @@
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
-		<TargetFramework>net8.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
 	<ItemGroup>
 	  <PackageReference Include="NLog.Extensions.Logging" Version="6.1.3" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\WorldRank.Application\WorldRank.Application.vbproj" />
+	  <ProjectReference Include="..\WorldRank.Domain\WorldRank.Domain.vbproj" />
+	  <ProjectReference Include="..\WorldRank.Infrastructure\WorldRank.Infrastructure.vbproj" />
 	</ItemGroup>
 
 	<ItemGroup>
