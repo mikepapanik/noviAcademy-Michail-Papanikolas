@@ -1,22 +1,24 @@
 using WorldRank.Domain.Enums;
 using WorldRank.Domain.Wallets;
 
-namespace WorldRankRank.Application.Interfaces
+namespace WorldRank.Application.Interfaces
 {
-	public interface IWalletRepository
-	{
-		void Add(Wallet wallet);
+    public interface IWalletRepository
+    {
+        void Add(Wallet wallet);
 
-		List<Wallet> GetAllWalletsByPlayerId(int playerId);
+        Wallet GetWallet(int playerId, Currency currency);
 
-		void UpdateBalance(int playerId, Currency currency, decimal newBalance);
+        List<Wallet> GetAllWalletsByPlayerId(int playerId);
 
-		void Deposit(int playerId, Currency currency, decimal amount);
+        void UpdateBalance(int playerId, Currency currency, decimal newBalance);
 
-		void Withdraw(int playerId, Currency currency, decimal amount);
+        void Deposit(int playerId, Currency currency, decimal amount);
 
-		void Block(int playerId, Currency currency);
+        void Withdraw(int playerId, Currency currency, decimal amount);
 
-		void Unblock(int playerId, Currency currency);
-	}
+        void Block(int playerId, Currency currency);
+
+        void Unblock(int playerId, Currency currency);
+    }
 }

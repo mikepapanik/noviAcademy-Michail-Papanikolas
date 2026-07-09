@@ -6,7 +6,7 @@ using WorldRank.Domain.Wallets;
 
 namespace WorldRank.Application.Strategies;
 
-/// <summary>Subtracts funds using normal withdraw rules.</summary>
+
 public class SubtractFundsStrategy : IFundsStrategy
 {
     public FundsOperation Operation => FundsOperation.Subtract;

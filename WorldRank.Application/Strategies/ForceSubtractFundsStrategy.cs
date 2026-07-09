@@ -6,7 +6,7 @@ using WorldRank.Domain.Wallets;
 
 namespace WorldRank.Application.Strategies;
 
-/// <summary>Subtracts funds directly by setting the balance.</summary>
+
 public class ForceSubtractFundsStrategy : IFundsStrategy
 {
     public FundsOperation Operation => FundsOperation.ForceSubtract;

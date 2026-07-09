@@ -1,77 +1,104 @@
 using NLog;
-using WorldRank.Domain.Exceptions;
-using WorldRankRank.Application.Interfaces;
+using WorldRank.Application.Interfaces;
 using WorldRank.Domain.Enums;
+using WorldRank.Domain.Exceptions;
 using WorldRank.Domain.Wallets;
 
 namespace WorldRank.Infrastructure.Repositories
 {
-	public class InMemoryWalletRepository : IWalletRepository
-	{
-		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
+    public class InMemoryWalletRepository : IWalletRepository
+    {
+        private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
-		private readonly List<Wallet> _wallets = new List<Wallet>();
+        private readonly List<Wallet> _wallets = new List<Wallet>();
 
-		public void Add(Wallet wallet)
-		{
-			var exists = _wallets.Any(item => item.PlayerId == wallet.PlayerId && item.Currency == wallet.Currency);
+        public void Add(Wallet wallet)
+        {
+            var exists = _wallets.Any(item =>
+                item.PlayerId == wallet.PlayerId &&
+                item.Currency == wallet.Currency);
 
-			if (exists)
-			{
-				throw new DuplicateWalletException(wallet.PlayerId, wallet.Currency);
-			}
+            if (exists)
+                throw new DuplicateWalletException(wallet.PlayerId, wallet.Currency);
 
-			_wallets.Add(wallet);
-			_logger.Info("Wallet created for player {PlayerId} in {Currency} with balance {Balance}", wallet.PlayerId, wallet.Currency, wallet.Balance);
-		}
+            _wallets.Add(wallet);
 
-		public List<Wallet> GetAllWalletsByPlayerId(int playerId)
-		{
-			return _wallets.Where(item => item.PlayerId == playerId).ToList();
-		}
+            _logger.Info(
+                "Wallet created for player {PlayerId} in {Currency} with balance {Balance}",
+                wallet.PlayerId,
+                wallet.Currency,
+                wallet.Balance);
+        }
 
-		public void UpdateBalance(int playerId, Currency currency, decimal newBalance)
-		{
-			GetWallet(playerId, currency).SetBalance(newBalance);
-			_logger.Info("Player {PlayerId} {Currency} wallet balance set to {Balance}", playerId, currency, newBalance);
-		}
+        public Wallet GetWallet(int playerId, Currency currency)
+        {
+            var wallet = _wallets.FirstOrDefault(item =>
+                item.PlayerId == playerId &&
+                item.Currency == currency);
 
-		public void Deposit(int playerId, Currency currency, decimal amount)
-		{
-			var wallet = GetWallet(playerId, currency);
-			wallet.Deposit(amount);
-			_logger.Info("Deposited {Amount} to player {PlayerId} {Currency} wallet (balance {Balance})", amount, playerId, currency, wallet.Balance);
-		}
+            if (wallet is null)
+                throw new WalletNotFoundException(playerId, currency);
 
-		public void Withdraw(int playerId, Currency currency, decimal amount)
-		{
-			var wallet = GetWallet(playerId, currency);
-			wallet.Withdraw(amount);
-			_logger.Info("Withdrew {Amount} from player {PlayerId} {Currency} wallet (balance {Balance})", amount, playerId, currency, wallet.Balance);
-		}
+            return wallet;
+        }
 
-		public void Block(int playerId, Currency currency)
-		{
-			GetWallet(playerId, currency).Block();
-			_logger.Info("Player {PlayerId} {Currency} wallet blocked", playerId, currency);
-		}
+        public List<Wallet> GetAllWalletsByPlayerId(int playerId)
+        {
+            return _wallets
+                .Where(item => item.PlayerId == playerId)
+                .ToList();
+        }
 
-		public void Unblock(int playerId, Currency currency)
-		{
-			GetWallet(playerId, currency).Unblock();
-			_logger.Info("Player {PlayerId} {Currency} wallet unblocked", playerId, currency);
-		}
+        public void UpdateBalance(int playerId, Currency currency, decimal newBalance)
+        {
+            var wallet = GetWallet(playerId, currency);
+            wallet.SetBalance(newBalance);
 
-		private Wallet GetWallet(int playerId, Currency currency)
-		{
-			var wallet = _wallets.SingleOrDefault(item => item.PlayerId == playerId && item.Currency == currency);
+            _logger.Info(
+                "Wallet balance updated for player {PlayerId} in {Currency}. New balance {Balance}",
+                playerId,
+                currency,
+                newBalance);
+        }
 
-			if (wallet is null)
-			{
-				throw new WalletNotFoundException(playerId, currency);
-			}
+        public void Deposit(int playerId, Currency currency, decimal amount)
+        {
+            var wallet = GetWallet(playerId, currency);
+            wallet.Deposit(amount);
 
-			return wallet;
-		}
-	}
+            _logger.Info(
+                "Deposit completed for player {PlayerId} in {Currency}. Amount {Amount}",
+                playerId,
+                currency,
+                amount);
+        }
+
+        public void Withdraw(int playerId, Currency currency, decimal amount)
+        {
+            var wallet = GetWallet(playerId, currency);
+            wallet.Withdraw(amount);
+
+            _logger.Info(
+                "Withdraw completed for player {PlayerId} in {Currency}. Amount {Amount}",
+                playerId,
+                currency,
+                amount);
+        }
+
+        public void Block(int playerId, Currency currency)
+        {
+            var wallet = GetWallet(playerId, currency);
+            wallet.Block();
+
+            _logger.Info("Wallet blocked for player {PlayerId} in {Currency}", playerId, currency);
+        }
+
+        public void Unblock(int playerId, Currency currency)
+        {
+            var wallet = GetWallet(playerId, currency);
+            wallet.Unblock();
+
+            _logger.Info("Wallet unblocked for player {PlayerId} in {Currency}", playerId, currency);
+        }
+    }
 }

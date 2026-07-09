@@ -1,17 +1,17 @@
 ﻿using WorldRank.Domain.Player;
 
-namespace WorldRankRank.Application.Interfaces
+namespace WorldRank.Application.Interfaces
 {
-	public interface IPlayerRepository
-	{
-		void AddPlayer(Player player);
+    public interface IPlayerRepository
+    {
+        void AddPlayer(Player player);
 
-		IEnumerable<Player> GetAllPlayers();
+        IEnumerable<Player> GetAllPlayers();
 
-		void DeletePlayer(int playerId);
+        void DeletePlayer(int playerId);
 
-		Player? FindPlayer(int playerId);
+        Player? FindPlayer(int playerId);
 
-		IEnumerable<IGrouping<int, Player>> GroupPlayersByScore();
-	}
+        IEnumerable<IGrouping<int, Player>> GroupPlayersByScore();
+    }
 }
