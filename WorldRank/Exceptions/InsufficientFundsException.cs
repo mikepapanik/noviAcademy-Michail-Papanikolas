@@ -1,14 +1,13 @@
-namespace WorldRank.Exceptions;
-
-public class InsufficientFundsException : WalletException
+namespace WorldRank.Console.Exceptions
 {
-    public decimal Balance { get; }
-    public decimal RequestedAmount { get; }
+	public class InsufficientFundsException : WalletException
+	{
+		public decimal AttemptedBalance { get; }
 
-    public InsufficientFundsException(decimal balance, decimal requestedAmount)
-        : base($"Insufficient funds. Balance: {balance}, Requested amount: {requestedAmount}.")
-    {
-        Balance = balance;
-        RequestedAmount = requestedAmount;
-    }
+		public InsufficientFundsException(decimal attemptedBalance)
+			: base($"Insufficient funds: wallet balance cannot be negative (attempted balance: {attemptedBalance}).")
+		{
+			AttemptedBalance = attemptedBalance;
+		}
+	}
 }

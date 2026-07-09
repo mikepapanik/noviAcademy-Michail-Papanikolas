@@ -2,13 +2,13 @@ using WorldRank.Console.Enums;
 
 namespace WorldRank.Console.Exceptions
 {
-	public class WalletNotFoundException : WalletException
+	public class DuplicateWalletException : WalletException
 	{
 		public int PlayerId { get; }
 		public Currency Currency { get; }
 
-		public WalletNotFoundException(int playerId, Currency currency)
-			: base($"Player {playerId} does not have a wallet in {currency}.")
+		public DuplicateWalletException(int playerId, Currency currency)
+			: base($"Player {playerId} already has a wallet in {currency}.")
 		{
 			PlayerId = playerId;
 			Currency = currency;
