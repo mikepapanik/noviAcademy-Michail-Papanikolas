@@ -1,12 +1,15 @@
-namespace WorldRank.Exceptions;
+using WorldRank.Console.Enums;
 
-public class WalletBlockedException : WalletException
+namespace WorldRank.Console.Exceptions
 {
-    public int PlayerId { get; }
+	public class WalletBlockedException : WalletException
+	{
+		public Currency Currency { get; }
 
-    public WalletBlockedException(int playerId)
-        : base($"Wallet for player {playerId} is blocked.")
-    {
-        PlayerId = playerId;
-    }
+		public WalletBlockedException(Currency currency)
+			: base($"The {currency} wallet is blocked. Unblock it before performing this operation.")
+		{
+			Currency = currency;
+		}
+	}
 }
