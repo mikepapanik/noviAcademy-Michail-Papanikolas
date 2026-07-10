@@ -81,6 +81,7 @@ while (true)
 int? PromptPlayerId()
 {
     Console.Write("Give player id: ");
+
     if (int.TryParse(Console.ReadLine(), out var playerId))
         return playerId;
 
@@ -90,13 +91,16 @@ int? PromptPlayerId()
 
 Currency? PromptCurrency()
 {
-    Console.Write("Give Currency: 1 - EUR | 2 - USD\n");
+    Console.WriteLine("Give Currency: 1 - EUR | 2 - USD");
+
     switch (Console.ReadLine())
     {
         case "1":
             return Currency.EUR;
+
         case "2":
             return Currency.USD;
+
         default:
             Console.WriteLine("Unknown currency.");
             return null;
@@ -106,6 +110,7 @@ Currency? PromptCurrency()
 decimal? PromptAmount(string label)
 {
     Console.Write($"{label}: ");
+
     if (decimal.TryParse(Console.ReadLine(), out var amount))
         return amount;
 
@@ -115,14 +120,38 @@ decimal? PromptAmount(string label)
 
 int GeneratePlayerId()
 {
-    var existingIds = playerService.GetAllPlayers().Select(p => p.Id).ToHashSet();
+    var existingIds = playerService
+        .GetAllPlayers()
+        .Select(player => player.Id)
+        .ToHashSet();
 
     int id;
+
     do
     {
         id = Random.Shared.Next(1, int.MaxValue);
     }
     while (existingIds.Contains(id));
+
+    return id;
+}
+
+int GenerateWalletId()
+{
+    var existingWalletIds = playerService
+        .GetAllPlayers()
+        .SelectMany(player =>
+            walletService.GetAllWalletsByPlayerId(player.Id))
+        .Select(wallet => wallet.Id)
+        .ToHashSet();
+
+    int id;
+
+    do
+    {
+        id = Random.Shared.Next(1, int.MaxValue);
+    }
+    while (existingWalletIds.Contains(id));
 
     return id;
 }
@@ -148,6 +177,7 @@ void AddPlayer()
 {
     Console.Write("Name: ");
     var name = Console.ReadLine();
+
     if (string.IsNullOrWhiteSpace(name))
     {
         Console.WriteLine("Name cannot be empty.");
@@ -156,21 +186,29 @@ void AddPlayer()
 
     Console.Write("Score: ");
     var scoreInput = Console.ReadLine();
+
     if (!int.TryParse(scoreInput, out var score))
     {
         Console.WriteLine("Score must be a whole number.");
         return;
     }
 
-    var player = new Player(GeneratePlayerId(), name);
+    var player = new Player(
+        GeneratePlayerId(),
+        name);
+
     player.AddScore(score);
+
     playerService.AddPlayer(player);
+
     Console.WriteLine("Player added successfully.");
 }
 
 void ListPlayers()
 {
-    var all = playerService.GetAllPlayers().ToList();
+    var all = playerService
+        .GetAllPlayers()
+        .ToList();
 
     if (all.Count == 0)
     {
@@ -184,7 +222,9 @@ void ListPlayers()
 
 void ListPlayersByScore()
 {
-    var groups = playerService.GroupPlayersByScore().ToList();
+    var groups = playerService
+        .GroupPlayersByScore()
+        .ToList();
 
     if (groups.Count == 0)
     {
@@ -195,6 +235,7 @@ void ListPlayersByScore()
     foreach (var group in groups)
     {
         Console.WriteLine($"Score {group.Key}:");
+
         foreach (var player in group)
             Console.WriteLine($"  {player}");
     }
@@ -203,32 +244,46 @@ void ListPlayersByScore()
 void FindPlayerByName()
 {
     Console.Write("Search by name: ");
+
     var term = Console.ReadLine() ?? string.Empty;
 
-    var player = playerService.GetAllPlayers()
-        .FirstOrDefault(p => p.Name.Equals(term, StringComparison.OrdinalIgnoreCase));
+    var player = playerService
+        .GetAllPlayers()
+        .FirstOrDefault(player =>
+            player.Name.Equals(
+                term,
+                StringComparison.OrdinalIgnoreCase));
 
-    Console.WriteLine(player is null ? "No player found." : player.ToString());
+    Console.WriteLine(
+        player is null
+            ? "No player found."
+            : player.ToString());
 }
 
 void FindPlayerById()
 {
     var playerId = PromptPlayerId();
+
     if (playerId is null)
         return;
 
     var player = playerService.FindPlayer(playerId.Value);
 
-    Console.WriteLine(player is null ? "No player found." : player.ToString());
+    Console.WriteLine(
+        player is null
+            ? "No player found."
+            : player.ToString());
 }
 
 void DeletePlayer()
 {
     var playerId = PromptPlayerId();
+
     if (playerId is null)
         return;
 
     playerService.DeletePlayer(playerId.Value);
+
     Console.WriteLine("Player deleted (if it existed).");
 }
 
@@ -239,30 +294,49 @@ void DeletePlayer()
 void AddWalletToPlayer()
 {
     var playerId = PromptPlayerId();
+
     if (playerId is null)
         return;
 
     var currency = PromptCurrency();
+
     if (currency is null)
         return;
 
     var balance = PromptAmount("Initial balance");
+
     if (balance is null)
         return;
 
     try
     {
-        walletService.AddWalletToPlayer(playerId.Value, currency.Value, balance.Value);
+        var walletId = GenerateWalletId();
+
+        walletService.AddWalletToPlayer(
+            walletId,
+            playerId.Value,
+            currency.Value,
+            balance.Value);
+
         Console.WriteLine("Wallet added successfully.");
     }
     catch (PlayerNotFoundException ex)
     {
-        logger.Warn(ex, "Could not add wallet, player {PlayerId} not found", playerId);
+        logger.Warn(
+            ex,
+            "Could not add wallet, player {PlayerId} not found",
+            playerId);
+
         Console.WriteLine($"Error: {ex.Message}");
     }
     catch (WalletException ex)
     {
-        logger.Warn(ex, "Could not add wallet for player {PlayerId} in {Currency}", playerId, currency);
+        logger.Warn(
+            ex,
+            "Could not add wallet for player {PlayerId} in {Currency}",
+            playerId,
+            currency);
+
         Console.WriteLine($"Error: {ex.Message}");
     }
 }
@@ -270,10 +344,12 @@ void AddWalletToPlayer()
 void GetWalletsOfPlayer()
 {
     var playerId = PromptPlayerId();
+
     if (playerId is null)
         return;
 
-    var wallets = walletService.GetAllWalletsByPlayerId(playerId.Value);
+    var wallets = walletService
+        .GetAllWalletsByPlayerId(playerId.Value);
 
     if (wallets.Count == 0)
     {
@@ -282,26 +358,36 @@ void GetWalletsOfPlayer()
     }
 
     foreach (var wallet in wallets)
-        Console.WriteLine($"Wallet Number {wallets.IndexOf(wallet)} {wallet}");
+    {
+        Console.WriteLine(
+            $"Wallet Number {wallets.IndexOf(wallet)} {wallet}");
+    }
 }
 
 void DepositToWallet()
 {
     var playerId = PromptPlayerId();
+
     if (playerId is null)
         return;
 
     var currency = PromptCurrency();
+
     if (currency is null)
         return;
 
     var amount = PromptAmount("Amount to deposit");
+
     if (amount is null)
         return;
 
     RunWalletOperation(() =>
     {
-        walletService.Deposit(playerId.Value, currency.Value, amount.Value);
+        walletService.Deposit(
+            playerId.Value,
+            currency.Value,
+            amount.Value);
+
         Console.WriteLine("Deposit successful.");
     });
 }
@@ -309,20 +395,27 @@ void DepositToWallet()
 void WithdrawFromWallet()
 {
     var playerId = PromptPlayerId();
+
     if (playerId is null)
         return;
 
     var currency = PromptCurrency();
+
     if (currency is null)
         return;
 
     var amount = PromptAmount("Amount to withdraw");
+
     if (amount is null)
         return;
 
     RunWalletOperation(() =>
     {
-        walletService.Withdraw(playerId.Value, currency.Value, amount.Value);
+        walletService.Withdraw(
+            playerId.Value,
+            currency.Value,
+            amount.Value);
+
         Console.WriteLine("Withdrawal successful.");
     });
 }
@@ -330,16 +423,21 @@ void WithdrawFromWallet()
 void BlockWallet()
 {
     var playerId = PromptPlayerId();
+
     if (playerId is null)
         return;
 
     var currency = PromptCurrency();
+
     if (currency is null)
         return;
 
     RunWalletOperation(() =>
     {
-        walletService.Block(playerId.Value, currency.Value);
+        walletService.Block(
+            playerId.Value,
+            currency.Value);
+
         Console.WriteLine("Wallet blocked.");
     });
 }
@@ -347,16 +445,21 @@ void BlockWallet()
 void UnblockWallet()
 {
     var playerId = PromptPlayerId();
+
     if (playerId is null)
         return;
 
     var currency = PromptCurrency();
+
     if (currency is null)
         return;
 
     RunWalletOperation(() =>
     {
-        walletService.Unblock(playerId.Value, currency.Value);
+        walletService.Unblock(
+            playerId.Value,
+            currency.Value);
+
         Console.WriteLine("Wallet unblocked.");
     });
 }
@@ -364,20 +467,27 @@ void UnblockWallet()
 void UpdateWalletBalance()
 {
     var playerId = PromptPlayerId();
+
     if (playerId is null)
         return;
 
     var currency = PromptCurrency();
+
     if (currency is null)
         return;
 
     var newBalance = PromptAmount("New balance");
+
     if (newBalance is null)
         return;
 
     RunWalletOperation(() =>
     {
-        walletService.UpdateBalance(playerId.Value, currency.Value, newBalance.Value);
+        walletService.UpdateBalance(
+            playerId.Value,
+            currency.Value,
+            newBalance.Value);
+
         Console.WriteLine("Balance updated.");
     });
 }

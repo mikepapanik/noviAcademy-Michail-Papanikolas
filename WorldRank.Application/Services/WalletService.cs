@@ -25,15 +25,24 @@ public class WalletService
         _logger = LogManager.GetCurrentClassLogger();
     }
 
-    public void AddWalletToPlayer(int playerId, Currency currency, decimal balance)
+    public void AddWalletToPlayer(
+        int id,
+        int playerId,
+        Currency currency,
+        decimal balance)
     {
         if (_playerRepository.FindPlayer(playerId) is null)
             throw new PlayerNotFoundException(playerId);
 
-        var wallet = new Wallet(playerId, currency, balance);
+        var wallet = new Wallet(id, playerId, currency, balance);
         _walletRepository.Add(wallet);
 
-        _logger.Info("Wallet created for player {PlayerId} in {Currency} with balance {Balance}", playerId, currency, balance);
+        _logger.Info(
+            "Wallet {WalletId} created for player {PlayerId} in {Currency} with balance {Balance}",
+            id,
+            playerId,
+            currency,
+            balance);
     }
 
     public List<Wallet> GetAllWalletsByPlayerId(int playerId)
@@ -43,22 +52,40 @@ public class WalletService
 
     public void Deposit(int playerId, Currency currency, decimal amount)
     {
-        ExecuteFundsOperation(playerId, currency, amount, FundsOperation.Add);
+        ExecuteFundsOperation(
+            playerId,
+            currency,
+            amount,
+            FundsOperation.Add);
     }
 
     public void Withdraw(int playerId, Currency currency, decimal amount)
     {
-        ExecuteFundsOperation(playerId, currency, amount, FundsOperation.Subtract);
+        ExecuteFundsOperation(
+            playerId,
+            currency,
+            amount,
+            FundsOperation.Subtract);
     }
 
     public void ForceSubtract(int playerId, Currency currency, decimal amount)
     {
-        ExecuteFundsOperation(playerId, currency, amount, FundsOperation.ForceSubtract);
+        ExecuteFundsOperation(
+            playerId,
+            currency,
+            amount,
+            FundsOperation.ForceSubtract);
     }
 
-    public void UpdateBalance(int playerId, Currency currency, decimal newBalance)
+    public void UpdateBalance(
+        int playerId,
+        Currency currency,
+        decimal newBalance)
     {
-        _walletRepository.UpdateBalance(playerId, currency, newBalance);
+        _walletRepository.UpdateBalance(
+            playerId,
+            currency,
+            newBalance);
     }
 
     public void Block(int playerId, Currency currency)
@@ -71,12 +98,19 @@ public class WalletService
         _walletRepository.Unblock(playerId, currency);
     }
 
-    private void ExecuteFundsOperation(int playerId, Currency currency, decimal amount, FundsOperation operation)
+    private void ExecuteFundsOperation(
+        int playerId,
+        Currency currency,
+        decimal amount,
+        FundsOperation operation)
     {
         var wallet = _walletRepository.GetWallet(playerId, currency);
 
         if (!_fundsStrategies.TryGetValue(operation, out var strategy))
-            throw new InvalidOperationException($"No funds strategy registered for operation {operation}.");
+        {
+            throw new InvalidOperationException(
+                $"No funds strategy registered for operation {operation}.");
+        }
 
         strategy.Execute(wallet, amount);
 

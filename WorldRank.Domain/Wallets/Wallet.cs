@@ -5,16 +5,23 @@ namespace WorldRank.Domain.Wallets
 {
     public class Wallet : IWallet
     {
+        public int Id { get; }
         public int PlayerId { get; }
         public Currency Currency { get; }
         public decimal Balance { get; private set; }
         public bool IsBlocked { get; private set; }
 
-        public Wallet(int playerId, Currency currency, decimal balance, bool isBlocked = false)
+        public Wallet(
+            int id,
+            int playerId,
+            Currency currency,
+            decimal balance,
+            bool isBlocked = false)
         {
             if (balance < 0)
                 throw new InsufficientFundsException(balance);
 
+            Id = id;
             PlayerId = playerId;
             Currency = currency;
             Balance = balance;
@@ -62,7 +69,7 @@ namespace WorldRank.Domain.Wallets
 
         public override string ToString()
         {
-            return $"Balance -> {Balance} Currency -> {Currency} IsBlocked -> {IsBlocked}";
+            return $"Id -> {Id} PlayerId -> {PlayerId} Balance -> {Balance} Currency -> {Currency} IsBlocked -> {IsBlocked}";
         }
     }
 }
