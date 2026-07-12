@@ -1,30 +1,48 @@
-using WorldRank.Domain.Enums;
-
 namespace WorldRank.Domain.Player;
 
 public class Player : IPlayer
 {
-	public int Id { get; }
-	public string Name { get; private set; }
-	public int Score { get; private set; }
+    public int Id { get; }
 
-	public Player(int id, string name)
-	{
-		if (string.IsNullOrWhiteSpace(name))
-			throw new ArgumentException("Name cannot be empty.", nameof(name));
+    public string Name { get; private set; }
 
-		Id = id;
-		Name = name;
-		Score = 0;
-	}
+    public int Score { get; private set; }
 
-	public void AddScore(int points)
-	{
-		if (points < 0)
-			throw new ArgumentOutOfRangeException(nameof(points), "Points cannot be negative.");
+    private Player()
+    {
+        Name = null!;
+    }
 
-		Score += points;
-	}
+    public Player(
+        int id,
+        string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            throw new ArgumentException(
+                "Name cannot be empty.",
+                nameof(name));
+        }
 
-	public override string ToString() => $"[{Id}] {Name} - Score: {Score}";
+        Id = id;
+        Name = name;
+        Score = 0;
+    }
+
+    public void AddScore(int points)
+    {
+        if (points < 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(points),
+                "Points cannot be negative.");
+        }
+
+        Score += points;
+    }
+
+    public override string ToString()
+    {
+        return $"[{Id}] {Name} - Score: {Score}";
+    }
 }

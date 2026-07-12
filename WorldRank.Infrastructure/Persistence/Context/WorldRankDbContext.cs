@@ -6,8 +6,9 @@ namespace WorldRank.Infrastructure.Persistence.Context;
 
 public class WorldRankDbContext : DbContext
 {
-    public DbSet<Player> Players { get; set; }
-    public DbSet<Wallet> Wallets { get; set; }
+    public DbSet<Player> Players => Set<Player>();
+
+    public DbSet<Wallet> Wallets => Set<Wallet>();
 
     public WorldRankDbContext(
         DbContextOptions<WorldRankDbContext> options)
@@ -17,45 +18,60 @@ public class WorldRankDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Player>(x =>
+        modelBuilder.Entity<Player>(entity =>
         {
-            x.ToTable("Players");
+            entity.ToTable("Players");
 
-            x.HasKey(p => p.Id);
+            entity.HasKey(player => player.Id);
 
-            x.Property(p => p.Id)
+            entity.Property(player => player.Id)
                 .ValueGeneratedNever();
 
-            x.Property(p => p.Name)
+            entity.Property(player => player.Name)
                 .HasMaxLength(100)
+                .IsRequired();
+
+            entity.Property(player => player.Score)
                 .IsRequired();
         });
 
-        modelBuilder.Entity<Wallet>(x =>
+        modelBuilder.Entity<Wallet>(entity =>
         {
-            x.ToTable("Wallets");
+            entity.ToTable("Wallets");
 
-            x.HasKey(w => w.Id);
+            entity.HasKey(wallet => wallet.Id);
 
-            x.Property(w => w.Id)
+            entity.Property(wallet => wallet.Id)
                 .ValueGeneratedNever();
 
-            x.Property(w => w.PlayerId)
+            entity.Property(wallet => wallet.PlayerId)
                 .IsRequired();
 
-            x.Property(w => w.Currency)
+            entity.Property(wallet => wallet.Currency)
                 .HasConversion<string>()
                 .HasMaxLength(20)
                 .IsRequired();
 
-            x.Property(w => w.Balance)
+            entity.Property(wallet => wallet.Balance)
                 .HasPrecision(18, 2)
                 .IsRequired();
 
-            x.Property(w => w.IsBlocked)
+            entity.Property(wallet => wallet.IsBlocked)
                 .IsRequired();
 
-            x.HasIndex(w => w.PlayerId);
+            entity.HasOne<Player>()
+                .WithMany()
+                .HasForeignKey(wallet => wallet.PlayerId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasIndex(wallet => wallet.PlayerId);
+
+            entity.HasIndex(wallet => new
+            {
+                wallet.PlayerId,
+                wallet.Currency
+            })
+            .IsUnique();
         });
 
         base.OnModelCreating(modelBuilder);

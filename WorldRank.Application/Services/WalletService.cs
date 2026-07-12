@@ -11,7 +11,9 @@ public class WalletService
 {
     private readonly IWalletRepository _walletRepository;
     private readonly IPlayerRepository _playerRepository;
-    private readonly IReadOnlyDictionary<FundsOperation, IFundsStrategy> _fundsStrategies;
+    private readonly IReadOnlyDictionary<FundsOperation, IFundsStrategy>
+        _fundsStrategies;
+
     private readonly Logger _logger;
 
     public WalletService(
@@ -21,7 +23,10 @@ public class WalletService
     {
         _walletRepository = walletRepository;
         _playerRepository = playerRepository;
-        _fundsStrategies = strategies.ToDictionary(strategy => strategy.Operation);
+
+        _fundsStrategies = strategies.ToDictionary(
+            strategy => strategy.Operation);
+
         _logger = LogManager.GetCurrentClassLogger();
     }
 
@@ -32,9 +37,16 @@ public class WalletService
         decimal balance)
     {
         if (_playerRepository.FindPlayer(playerId) is null)
+        {
             throw new PlayerNotFoundException(playerId);
+        }
 
-        var wallet = new Wallet(id, playerId, currency, balance);
+        var wallet = new Wallet(
+            id,
+            playerId,
+            currency,
+            balance);
+
         _walletRepository.Add(wallet);
 
         _logger.Info(
@@ -45,12 +57,17 @@ public class WalletService
             balance);
     }
 
-    public List<Wallet> GetAllWalletsByPlayerId(int playerId)
+    public List<Wallet> GetAllWalletsByPlayerId(
+        int playerId)
     {
-        return _walletRepository.GetAllWalletsByPlayerId(playerId);
+        return _walletRepository
+            .GetAllWalletsByPlayerId(playerId);
     }
 
-    public void Deposit(int playerId, Currency currency, decimal amount)
+    public void Deposit(
+        int playerId,
+        Currency currency,
+        decimal amount)
     {
         ExecuteFundsOperation(
             playerId,
@@ -59,7 +76,10 @@ public class WalletService
             FundsOperation.Add);
     }
 
-    public void Withdraw(int playerId, Currency currency, decimal amount)
+    public void Withdraw(
+        int playerId,
+        Currency currency,
+        decimal amount)
     {
         ExecuteFundsOperation(
             playerId,
@@ -68,7 +88,10 @@ public class WalletService
             FundsOperation.Subtract);
     }
 
-    public void ForceSubtract(int playerId, Currency currency, decimal amount)
+    public void ForceSubtract(
+        int playerId,
+        Currency currency,
+        decimal amount)
     {
         ExecuteFundsOperation(
             playerId,
@@ -88,14 +111,22 @@ public class WalletService
             newBalance);
     }
 
-    public void Block(int playerId, Currency currency)
+    public void Block(
+        int playerId,
+        Currency currency)
     {
-        _walletRepository.Block(playerId, currency);
+        _walletRepository.Block(
+            playerId,
+            currency);
     }
 
-    public void Unblock(int playerId, Currency currency)
+    public void Unblock(
+        int playerId,
+        Currency currency)
     {
-        _walletRepository.Unblock(playerId, currency);
+        _walletRepository.Unblock(
+            playerId,
+            currency);
     }
 
     private void ExecuteFundsOperation(
@@ -104,15 +135,23 @@ public class WalletService
         decimal amount,
         FundsOperation operation)
     {
-        var wallet = _walletRepository.GetWallet(playerId, currency);
+        var wallet = _walletRepository.GetWallet(
+            playerId,
+            currency);
 
-        if (!_fundsStrategies.TryGetValue(operation, out var strategy))
+        if (!_fundsStrategies.TryGetValue(
+            operation,
+            out var strategy))
         {
             throw new InvalidOperationException(
                 $"No funds strategy registered for operation {operation}.");
         }
 
-        strategy.Execute(wallet, amount);
+        strategy.Execute(
+            wallet,
+            amount);
+
+        _walletRepository.SaveChanges();
 
         _logger.Info(
             "Funds operation {Operation} executed for player {PlayerId} in {Currency} with amount {Amount}",
