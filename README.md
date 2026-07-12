@@ -1,1 +1,1 @@
-# novi-Academy-Michail-Papanikolas
+# noviAcademy-Michail-Papanikolas

@@ -8,7 +8,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.9" />
     <PackageReference Include="NLog.Extensions.Logging" Version="6.1.4" />
   </ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\WorldRank.Application\WorldRank.Application.csproj" />
+	  <ProjectReference Include="..\WorldRank.Domain\WorldRank.Domain.csproj" />
+	  <ProjectReference Include="..\WorldRank.Infrastructure\WorldRank.Infrastructure.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="nlog.config">
+	    <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+	  </None>
+	</ItemGroup>
 
 </Project>
