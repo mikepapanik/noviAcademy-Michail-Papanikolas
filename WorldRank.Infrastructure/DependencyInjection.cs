@@ -1,15 +1,30 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using WorldRank.Application.Interfaces;
+using WorldRank.Infrastructure.Persistence.Context;
 using WorldRank.Infrastructure.Repositories;
 
 namespace WorldRank.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+    public static IServiceCollection AddInfrastructure(
+        this IServiceCollection services)
     {
-        services.AddSingleton<IPlayerRepository, InMemoryPlayerRepository>();
-        services.AddSingleton<IWalletRepository, InMemoryWalletRepository>();
+        services.AddDbContext<WorldRankDbContext>(options =>
+            options.UseSqlServer(
+                "Server=localhost;" +
+                "Database=WorldRank;" +
+                "Integrated Security=true;" +
+                "TrustServerCertificate=true"));
+
+        services.AddScoped<
+            IPlayerRepository,
+            DBPlayerRepository>();
+
+        services.AddScoped<
+            IWalletRepository,
+            DBWalletRepository>();
 
         return services;
     }
