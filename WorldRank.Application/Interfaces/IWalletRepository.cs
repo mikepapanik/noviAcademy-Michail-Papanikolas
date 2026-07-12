@@ -7,18 +7,38 @@ namespace WorldRank.Application.Interfaces
     {
         void Add(Wallet wallet);
 
-        Wallet GetWallet(int playerId, Currency currency);
+        Wallet GetWallet(
+            int playerId,
+            Currency currency);
 
-        List<Wallet> GetAllWalletsByPlayerId(int playerId);
+        Wallet[] GetAll();
 
-        void UpdateBalance(int playerId, Currency currency, decimal newBalance);
+        List<Wallet> GetAllWalletsByPlayerId(
+            int playerId);
 
-        void Deposit(int playerId, Currency currency, decimal amount);
+        void UpdateBalance(
+            int playerId,
+            Currency currency,
+            decimal newBalance);
 
-        void Withdraw(int playerId, Currency currency, decimal amount);
+        void Deposit(
+            int playerId,
+            Currency currency,
+            decimal amount);
 
-        void Block(int playerId, Currency currency);
+        void Withdraw(
+            int playerId,
+            Currency currency,
+            decimal amount);
 
-        void Unblock(int playerId, Currency currency);
+        void Block(
+            int playerId,
+            Currency currency);
+
+        void Unblock(
+            int playerId,
+            Currency currency);
+
+        void SaveChanges();
     }
 }
