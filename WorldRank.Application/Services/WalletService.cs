@@ -1,4 +1,4 @@
-﻿using NLog;
+﻿using Microsoft.Extensions.Logging;
 using WorldRank.Application.Interfaces;
 using WorldRank.Application.Strategies;
 using WorldRank.Domain.Enums;
@@ -9,17 +9,19 @@ namespace WorldRank.Application.Services;
 
 public class WalletService
 {
+   
     private readonly IWalletRepository _walletRepository;
     private readonly IPlayerRepository _playerRepository;
     private readonly IReadOnlyDictionary<FundsOperation, IFundsStrategy>
         _fundsStrategies;
+    private readonly ILogger<WalletService> _logger;
 
-    private readonly Logger _logger;
 
     public WalletService(
         IWalletRepository walletRepository,
         IPlayerRepository playerRepository,
-        IEnumerable<IFundsStrategy> strategies)
+        IEnumerable<IFundsStrategy> strategies,
+        ILogger<WalletService> logger)
     {
         _walletRepository = walletRepository;
         _playerRepository = playerRepository;
@@ -27,7 +29,7 @@ public class WalletService
         _fundsStrategies = strategies.ToDictionary(
             strategy => strategy.Operation);
 
-        _logger = LogManager.GetCurrentClassLogger();
+        _logger = logger;
     }
 
     public void AddWalletToPlayer(
@@ -49,7 +51,7 @@ public class WalletService
 
         _walletRepository.Add(wallet);
 
-        _logger.Info(
+        _logger.LogInformation(
             "Wallet {WalletId} created for player {PlayerId} in {Currency} with balance {Balance}",
             id,
             playerId,
@@ -151,9 +153,9 @@ public class WalletService
             wallet,
             amount);
 
-        _walletRepository.SaveChanges();
+        _walletRepository.Update(wallet);
 
-        _logger.Info(
+        _logger.LogInformation(
             "Funds operation {Operation} executed for player {PlayerId} in {Currency} with amount {Amount}",
             operation,
             playerId,

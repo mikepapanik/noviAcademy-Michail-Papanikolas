@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using NLog;
 using WorldRank.Application.Interfaces;
 using WorldRank.Domain.Player;
 using WorldRank.Infrastructure.Persistence.Context;
@@ -8,8 +7,7 @@ namespace WorldRank.Infrastructure.Repositories;
 
 public class DBPlayerRepository : IPlayerRepository
 {
-    private static readonly Logger _logger =
-        LogManager.GetCurrentClassLogger();
+
 
     private readonly WorldRankDbContext _dbContext;
 
@@ -23,11 +21,6 @@ public class DBPlayerRepository : IPlayerRepository
         _dbContext.Players.Add(player);
         _dbContext.SaveChanges();
 
-        _logger.Info(
-            "Player {PlayerId} ({Name}) added to database with score {Score}",
-            player.Id,
-            player.Name,
-            player.Score);
     }
 
     public IEnumerable<Player> GetAllPlayers()
@@ -44,9 +37,6 @@ public class DBPlayerRepository : IPlayerRepository
 
         if (player is null)
         {
-            _logger.Warn(
-                "Delete skipped: player {PlayerId} not found in database",
-                playerId);
 
             return;
         }
@@ -54,9 +44,7 @@ public class DBPlayerRepository : IPlayerRepository
         _dbContext.Players.Remove(player);
         _dbContext.SaveChanges();
 
-        _logger.Info(
-            "Player {PlayerId} deleted from database",
-            playerId);
+
     }
 
     public Player? FindPlayer(int playerId)
