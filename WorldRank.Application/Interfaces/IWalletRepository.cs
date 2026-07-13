@@ -1,44 +1,31 @@
 using WorldRank.Domain.Enums;
 using WorldRank.Domain.Wallets;
 
-namespace WorldRank.Application.Interfaces
+namespace WorldRank.Application.Interfaces;
+
+public interface IWalletRepository
 {
-    public interface IWalletRepository
-    {
-        void Add(Wallet wallet);
+    Task AddAsync(
+        Wallet wallet,
+        CancellationToken cancellationToken);
 
-        Wallet GetWallet(
-            int playerId,
-            Currency currency);
+    Task<Wallet?> GetByIdAsync(
+        int walletId,
+        CancellationToken cancellationToken);
 
-        Wallet[] GetAll();
+    Task<Wallet?> GetWalletAsync(
+        int playerId,
+        Currency currency,
+        CancellationToken cancellationToken);
 
-        List<Wallet> GetAllWalletsByPlayerId(
-            int playerId);
+    Task<IReadOnlyList<Wallet>> GetAllAsync(
+        CancellationToken cancellationToken);
 
-        void UpdateBalance(
-            int playerId,
-            Currency currency,
-            decimal newBalance);
+    Task<IReadOnlyList<Wallet>> GetAllWalletsByPlayerIdAsync(
+        int playerId,
+        CancellationToken cancellationToken);
 
-        void Deposit(
-            int playerId,
-            Currency currency,
-            decimal amount);
-
-        void Withdraw(
-            int playerId,
-            Currency currency,
-            decimal amount);
-
-        void Block(
-            int playerId,
-            Currency currency);
-
-        void Unblock(
-            int playerId,
-            Currency currency);
-
-        void Update(Wallet wallet);
-    }
+    Task UpdateAsync(
+        Wallet wallet,
+        CancellationToken cancellationToken);
 }

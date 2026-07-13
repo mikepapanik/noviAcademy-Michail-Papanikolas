@@ -1,9 +1,11 @@
-﻿using System.Text.Json.Serialization;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
+using System.Text.Json.Serialization;
 using WorldRank.Application;
+using WorldRank.Application.Caching;
 using WorldRank.Infrastructure;
+using WorldRank.Infrastructure.Caching;
 
 namespace WorldRank.Api;
 
@@ -25,6 +27,9 @@ public static class DependencyInjection
 
         // In-memory cache.
         services.AddMemoryCache();
+
+        // Register the Application-owned cache abstraction.
+        services.AddSingleton<ICache, MemoryCacheStore>();
 
         // Controllers and enum serialization.
         services

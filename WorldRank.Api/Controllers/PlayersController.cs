@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
+using WorldRank.Api.Dtos.Players;
 using WorldRank.Application.Services;
 using WorldRank.Domain.Player;
 
 namespace WorldRank.Api.Controllers;
 
 [ApiController]
-[Route("api/[controller]")]
+[Route("players")]
 public class PlayersController : ControllerBase
 {
     private readonly PlayerService _playerService;
@@ -16,46 +17,78 @@ public class PlayersController : ControllerBase
     }
 
     [HttpGet]
-    public IActionResult GetAll()
+    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
     {
-        return Ok(_playerService.GetAllPlayers());
+        var players = await _playerService
+            .GetAllPlayersAsync(
+                cancellationToken);
+
+        var response = players
+            .Select(player => new PlayerResponse(
+                player.Id,
+                player.Name,
+                player.Score))
+            .ToList();
+
+        return Ok(response);
     }
 
     [HttpGet("{id:int}")]
-    public IActionResult GetById(int id)
+    public async Task<IActionResult> GetById(int id,CancellationToken cancellationToken)
     {
-        var player = _playerService.FindPlayer(id);
+        var player = await _playerService.FindPlayerAsync(id,cancellationToken);
 
         if (player is null)
         {
             return NotFound();
         }
 
-        return Ok(player);
+        var response = new PlayerResponse(
+            player.Id,
+            player.Name,
+            player.Score);
+
+        return Ok(response);
     }
 
     [HttpPost]
-    public IActionResult Create([FromBody] Player player)
+    public async Task<IActionResult> Create([FromBody] CreatePlayerRequest request,CancellationToken cancellationToken)
     {
-        _playerService.AddPlayer(player);
+        var player = new Player(
+            request.Id,
+            request.Name);
+
+        player.AddScore(request.Score);
+
+        var createdPlayer = await _playerService
+            .AddPlayerAsync(
+                player,
+                cancellationToken);
+
+        var response = new PlayerResponse(
+            createdPlayer.Id,
+            createdPlayer.Name,
+            createdPlayer.Score);
 
         return CreatedAtAction(
             nameof(GetById),
-            new { id = player.Id },
-            player);
+            new { id = createdPlayer.Id },
+            response);
     }
 
     [HttpDelete("{id:int}")]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(
+        int id,
+        CancellationToken cancellationToken)
     {
-        var player = _playerService.FindPlayer(id);
+        var player = await _playerService.FindPlayerAsync(id,cancellationToken);
 
         if (player is null)
         {
             return NotFound();
         }
 
-        _playerService.DeletePlayer(id);
+        await _playerService.DeletePlayerAsync(id,cancellationToken);
 
         return NoContent();
     }

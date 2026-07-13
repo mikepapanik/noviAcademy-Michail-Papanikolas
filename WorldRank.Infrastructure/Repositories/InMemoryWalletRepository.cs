@@ -7,12 +7,12 @@ namespace WorldRank.Infrastructure.Repositories
 {
     public class InMemoryWalletRepository : IWalletRepository
     {
+        private readonly List<Wallet> _wallets = [];
 
-        private readonly List<Wallet> _wallets =
-            new List<Wallet>();
-
-        public void Add(Wallet wallet)
+        public Task AddAsync(Wallet wallet,CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var exists = _wallets.Any(item =>
                 item.PlayerId == wallet.PlayerId &&
                 item.Currency == wallet.Currency);
@@ -26,114 +26,66 @@ namespace WorldRank.Infrastructure.Repositories
 
             _wallets.Add(wallet);
 
+            return Task.CompletedTask;
         }
 
-        public Wallet GetWallet(
-            int playerId,
-            Currency currency)
+        public Task<Wallet?> GetByIdAsync(int walletId,CancellationToken cancellationToken)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var wallet = _wallets.FirstOrDefault(
+                item => item.Id == walletId);
+
+            return Task.FromResult(wallet);
+        }
+
+        public Task<Wallet?> GetWalletAsync(int playerId,Currency currency,CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
             var wallet = _wallets.FirstOrDefault(item =>
                 item.PlayerId == playerId &&
                 item.Currency == currency);
 
-            if (wallet is null)
-            {
-                throw new WalletNotFoundException(
-                    playerId,
-                    currency);
-            }
-
-            return wallet;
+            return Task.FromResult(wallet);
         }
 
-        public Wallet[] GetAll()
+        public Task<IReadOnlyList<Wallet>> GetAllAsync(CancellationToken cancellationToken)
         {
-            return _wallets.ToArray();
+            cancellationToken.ThrowIfCancellationRequested();
+
+            IReadOnlyList<Wallet> wallets =
+                _wallets.ToList();
+
+            return Task.FromResult(wallets);
         }
 
-        public List<Wallet> GetAllWalletsByPlayerId(
-            int playerId)
+        public Task<IReadOnlyList<Wallet>>
+            GetAllWalletsByPlayerIdAsync(int playerId,CancellationToken cancellationToken)
         {
-            return _wallets
-                .Where(item => item.PlayerId == playerId)
+            cancellationToken.ThrowIfCancellationRequested();
+
+            IReadOnlyList<Wallet> wallets = _wallets
+                .Where(item =>
+                    item.PlayerId == playerId)
                 .ToList();
+
+            return Task.FromResult(wallets);
         }
 
-        public void UpdateBalance(
-            int playerId,
-            Currency currency,
-            decimal newBalance)
+        public Task UpdateAsync(Wallet wallet,CancellationToken cancellationToken)
         {
-            var wallet = GetWallet(
-                playerId,
-                currency);
+            cancellationToken.ThrowIfCancellationRequested();
 
-            wallet.SetBalance(newBalance);
-
-        }
-
-        public void Deposit(
-            int playerId,
-            Currency currency,
-            decimal amount)
-        {
-            var wallet = GetWallet(
-                playerId,
-                currency);
-
-            wallet.Deposit(amount);
-
-        }
-
-        public void Withdraw(
-            int playerId,
-            Currency currency,
-            decimal amount)
-        {
-            var wallet = GetWallet(
-                playerId,
-                currency);
-
-            wallet.Withdraw(amount);
-
-
-        }
-
-        public void Block(
-            int playerId,
-            Currency currency)
-        {
-            var wallet = GetWallet(
-                playerId,
-                currency);
-
-            wallet.Block();
-
-
-        }
-
-        public void Unblock(
-            int playerId,
-            Currency currency)
-        {
-            var wallet = GetWallet(
-                playerId,
-                currency);
-
-            wallet.Unblock();
-
-
-        }
-
-        public void Update(Wallet wallet)
-        {
-            var index = _wallets.FindIndex(item =>
-                item.Id == wallet.Id);
+            var index = _wallets.FindIndex(
+                item => item.Id == wallet.Id);
 
             if (index >= 0)
             {
                 _wallets[index] = wallet;
             }
+
+            return Task.CompletedTask;
         }
     }
 }

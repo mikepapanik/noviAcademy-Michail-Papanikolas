@@ -16,50 +16,41 @@ public class DBPlayerRepository : IPlayerRepository
         _dbContext = dbContext;
     }
 
-    public void AddPlayer(Player player)
+    public async Task AddPlayerAsync(Player player,CancellationToken cancellationToken)
     {
-        _dbContext.Players.Add(player);
-        _dbContext.SaveChanges();
+        await _dbContext.Players.AddAsync(player,cancellationToken);
 
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    public IEnumerable<Player> GetAllPlayers()
+    public async Task<IReadOnlyList<Player>> GetAllPlayersAsync(CancellationToken cancellationToken)
     {
-        return _dbContext.Players
+        return await _dbContext.Players
             .AsNoTracking()
-            .ToList();
+            .ToListAsync(cancellationToken);
     }
 
-    public void DeletePlayer(int playerId)
+    public async Task<Player?> FindPlayerAsync(int playerId,CancellationToken cancellationToken)
     {
-        var player = _dbContext.Players
-            .FirstOrDefault(item => item.Id == playerId);
+        return await _dbContext.Players
+            .AsNoTracking()
+            .FirstOrDefaultAsync(
+                player => player.Id == playerId,cancellationToken);
+    }
+
+    public async Task DeletePlayerAsync(int playerId,CancellationToken cancellationToken)
+    {
+        var player = await _dbContext.Players
+            .FirstOrDefaultAsync(
+                item => item.Id == playerId,cancellationToken);
 
         if (player is null)
         {
-
             return;
         }
 
         _dbContext.Players.Remove(player);
-        _dbContext.SaveChanges();
 
-
-    }
-
-    public Player? FindPlayer(int playerId)
-    {
-        return _dbContext.Players
-            .AsNoTracking()
-            .FirstOrDefault(item => item.Id == playerId);
-    }
-
-    public IEnumerable<IGrouping<int, Player>> GroupPlayersByScore()
-    {
-        return _dbContext.Players
-            .AsNoTracking()
-            .ToList()
-            .GroupBy(player => player.Score)
-            .OrderByDescending(group => group.Key);
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

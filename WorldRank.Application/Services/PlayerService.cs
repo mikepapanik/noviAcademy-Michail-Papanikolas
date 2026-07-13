@@ -1,5 +1,5 @@
-﻿using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
+using WorldRank.Application.Caching;
 using WorldRank.Application.Interfaces;
 using WorldRank.Domain.Player;
 
@@ -11,15 +11,15 @@ public class PlayerService
         "players:all";
 
     private static readonly TimeSpan CacheDuration =
-        TimeSpan.FromMinutes(5);
+        TimeSpan.FromSeconds(60);
 
     private readonly IPlayerRepository _playerRepository;
-    private readonly IMemoryCache _cache;
+    private readonly ICache _cache;
     private readonly ILogger<PlayerService> _logger;
 
     public PlayerService(
         IPlayerRepository playerRepository,
-        IMemoryCache cache,
+        ICache cache,
         ILogger<PlayerService> logger)
     {
         _playerRepository = playerRepository;
@@ -27,39 +27,58 @@ public class PlayerService
         _logger = logger;
     }
 
-    public void AddPlayer(Player player)
+    public async Task<Player> AddPlayerAsync(
+        Player player,
+        CancellationToken cancellationToken)
     {
-        _playerRepository.AddPlayer(player);
+        await _playerRepository.AddPlayerAsync(
+            player,
+            cancellationToken);
 
-        InvalidatePlayerCache(player.Id);
+        await _cache.SetAsync(
+            GetPlayerCacheKey(player.Id),
+            player,
+            CacheDuration,
+            cancellationToken);
+
+        await _cache.RemoveAsync(
+            AllPlayersCacheKey,
+            cancellationToken);
 
         _logger.LogInformation(
             "Player {PlayerId} ({PlayerName}) added with score {Score}",
             player.Id,
             player.Name,
             player.Score);
+
+        return player;
     }
 
-    public IEnumerable<Player> GetAllPlayers()
+    public async Task<IReadOnlyList<Player>> GetAllPlayersAsync(
+        CancellationToken cancellationToken)
     {
-        if (_cache.TryGetValue(
-            AllPlayersCacheKey,
-            out List<Player>? cachedPlayers))
+        var cachedPlayers =
+            await _cache.GetAsync<IReadOnlyList<Player>>(
+                AllPlayersCacheKey,
+                cancellationToken);
+
+        if (cachedPlayers is not null)
         {
             _logger.LogInformation(
                 "Players loaded from cache");
 
-            return cachedPlayers!;
+            return cachedPlayers;
         }
 
-        var players = _playerRepository
-            .GetAllPlayers()
-            .ToList();
+        var players = await _playerRepository
+            .GetAllPlayersAsync(
+                cancellationToken);
 
-        _cache.Set(
+        await _cache.SetAsync(
             AllPlayersCacheKey,
             players,
-            CacheDuration);
+            CacheDuration,
+            cancellationToken);
 
         _logger.LogInformation(
             "Players loaded from repository and stored in cache");
@@ -67,13 +86,19 @@ public class PlayerService
         return players;
     }
 
-    public Player? FindPlayer(int playerId)
+    public async Task<Player?> FindPlayerAsync(
+        int playerId,
+        CancellationToken cancellationToken)
     {
-        var cacheKey = GetPlayerCacheKey(playerId);
+        var cacheKey =
+            GetPlayerCacheKey(playerId);
 
-        if (_cache.TryGetValue(
-            cacheKey,
-            out Player? cachedPlayer))
+        var cachedPlayer =
+            await _cache.GetAsync<Player>(
+                cacheKey,
+                cancellationToken);
+
+        if (cachedPlayer is not null)
         {
             _logger.LogInformation(
                 "Player {PlayerId} loaded from cache",
@@ -82,23 +107,35 @@ public class PlayerService
             return cachedPlayer;
         }
 
-        var player = _playerRepository.FindPlayer(playerId);
+        var player =
+            await _playerRepository.FindPlayerAsync(
+                playerId,
+                cancellationToken);
 
-        _cache.Set(
-            cacheKey,
-            player,
-            CacheDuration);
+        if (player is not null)
+        {
+            await _cache.SetAsync(
+                cacheKey,
+                player,
+                CacheDuration,
+                cancellationToken);
 
-        _logger.LogInformation(
-            "Player {PlayerId} loaded from repository and stored in cache",
-            playerId);
+            _logger.LogInformation(
+                "Player {PlayerId} loaded from repository and stored in cache",
+                playerId);
+        }
 
         return player;
     }
 
-    public void DeletePlayer(int playerId)
+    public async Task DeletePlayerAsync(
+        int playerId,
+        CancellationToken cancellationToken)
     {
-        var player = _playerRepository.FindPlayer(playerId);
+        var player =
+            await _playerRepository.FindPlayerAsync(
+                playerId,
+                cancellationToken);
 
         if (player is null)
         {
@@ -109,27 +146,43 @@ public class PlayerService
             return;
         }
 
-        _playerRepository.DeletePlayer(playerId);
+        await _playerRepository.DeletePlayerAsync(
+            playerId,
+            cancellationToken);
 
-        InvalidatePlayerCache(playerId);
+        await InvalidatePlayerCacheAsync(
+            playerId,
+            cancellationToken);
 
         _logger.LogInformation(
             "Player {PlayerId} deleted",
             playerId);
     }
 
-    public IEnumerable<IGrouping<int, Player>>
-        GroupPlayersByScore()
+    public async Task<IEnumerable<IGrouping<int, Player>>>
+        GroupPlayersByScoreAsync(
+            CancellationToken cancellationToken)
     {
-        return GetAllPlayers()
+        var players =
+            await GetAllPlayersAsync(
+                cancellationToken);
+
+        return players
             .GroupBy(player => player.Score)
             .OrderByDescending(group => group.Key);
     }
 
-    private void InvalidatePlayerCache(int playerId)
+    private async Task InvalidatePlayerCacheAsync(
+        int playerId,
+        CancellationToken cancellationToken)
     {
-        _cache.Remove(AllPlayersCacheKey);
-        _cache.Remove(GetPlayerCacheKey(playerId));
+        await _cache.RemoveAsync(
+            AllPlayersCacheKey,
+            cancellationToken);
+
+        await _cache.RemoveAsync(
+            GetPlayerCacheKey(playerId),
+            cancellationToken);
 
         _logger.LogInformation(
             "Cache invalidated for player {PlayerId}",

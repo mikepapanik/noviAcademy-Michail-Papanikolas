@@ -44,23 +44,27 @@ while (true)
     Console.WriteLine("0. Exit");
     Console.Write("> ");
 
-    Action? action = Console.ReadLine() switch
+    Func<Task>? action = Console.ReadLine() switch
     {
-        "1" => AddPlayer,
-        "2" => ListPlayers,
-        "3" => ListPlayersByScore,
-        "4" => FindPlayerByName,
-        "5" => FindPlayerById,
-        "6" => DeletePlayer,
-        "7" => AddWalletToPlayer,
-        "8" => GetWalletsOfPlayer,
-        "9" => DepositToWallet,
-        "10" => WithdrawFromWallet,
-        "11" => BlockWallet,
-        "12" => UnblockWallet,
-        "13" => UpdateWalletBalance,
+        "1" => AddPlayerAsync,
+        "2" => ListPlayersAsync,
+        "3" => ListPlayersByScoreAsync,
+        "4" => FindPlayerByNameAsync,
+        "5" => FindPlayerByIdAsync,
+        "6" => DeletePlayerAsync,
+        "7" => AddWalletToPlayerAsync,
+        "8" => GetWalletsOfPlayerAsync,
+        "9" => DepositToWalletAsync,
+        "10" => WithdrawFromWalletAsync,
+        "11" => BlockWalletAsync,
+        "12" => UnblockWalletAsync,
+        "13" => UpdateWalletBalanceAsync,
         "0" => null,
-        _ => () => Console.WriteLine("Unknown option.")
+        _ => () =>
+        {
+            Console.WriteLine("Unknown option.");
+            return Task.CompletedTask;
+        }
     };
 
     if (action is null)
@@ -72,7 +76,7 @@ while (true)
 
     try
     {
-        action();
+        await action();
     }
     catch (Exception ex)
     {
@@ -100,6 +104,23 @@ int? PromptPlayerId()
 
     Console.WriteLine(
         "Player id must be a whole number.");
+
+    return null;
+}
+
+int? PromptWalletId()
+{
+    Console.Write("Give wallet id: ");
+
+    if (int.TryParse(
+        Console.ReadLine(),
+        out var walletId))
+    {
+        return walletId;
+    }
+
+    Console.WriteLine(
+        "Wallet id must be a whole number.");
 
     return null;
 }
@@ -140,10 +161,11 @@ decimal? PromptAmount(string label)
     return null;
 }
 
-int GeneratePlayerId()
+async Task<int> GeneratePlayerIdAsync()
 {
-    var existingIds = playerService
-        .GetAllPlayers()
+    var existingIds = (await playerService
+        .GetAllPlayersAsync(
+            CancellationToken.None))
         .Select(player => player.Id)
         .ToHashSet();
 
@@ -160,13 +182,20 @@ int GeneratePlayerId()
     return id;
 }
 
-int GenerateWalletId()
+async Task<int> GenerateWalletIdAsync()
 {
-    var existingWalletIds = playerService
-        .GetAllPlayers()
-        .SelectMany(player =>
-            walletService.GetAllWalletsByPlayerId(
-                player.Id))
+    var players = await playerService
+        .GetAllPlayersAsync(
+            CancellationToken.None);
+
+    var walletLists = await Task.WhenAll(
+        players.Select(player =>
+            walletService.GetAllWalletsByPlayerIdAsync(
+                player.Id,
+                CancellationToken.None)));
+
+    var existingWalletIds = walletLists
+        .SelectMany(wallets => wallets)
         .Select(wallet => wallet.Id)
         .ToHashSet();
 
@@ -183,11 +212,12 @@ int GenerateWalletId()
     return id;
 }
 
-void RunWalletOperation(Action operation)
+async Task RunWalletOperationAsync(
+    Func<Task> operation)
 {
     try
     {
-        operation();
+        await operation();
     }
     catch (WalletException ex)
     {
@@ -204,7 +234,7 @@ void RunWalletOperation(Action operation)
 
 #region Player Methods
 
-void AddPlayer()
+async Task AddPlayerAsync()
 {
     Console.Write("Name: ");
     var name = Console.ReadLine();
@@ -231,21 +261,24 @@ void AddPlayer()
     }
 
     var player = new Player(
-        GeneratePlayerId(),
+        await GeneratePlayerIdAsync(),
         name);
 
     player.AddScore(score);
 
-    playerService.AddPlayer(player);
+    await playerService.AddPlayerAsync(
+        player,
+        CancellationToken.None);
 
     Console.WriteLine(
         "Player added successfully.");
 }
 
-void ListPlayers()
+async Task ListPlayersAsync()
 {
-    var all = playerService
-        .GetAllPlayers()
+    var all = (await playerService
+        .GetAllPlayersAsync(
+            CancellationToken.None))
         .ToList();
 
     if (all.Count == 0)
@@ -262,10 +295,11 @@ void ListPlayers()
     }
 }
 
-void ListPlayersByScore()
+async Task ListPlayersByScoreAsync()
 {
-    var groups = playerService
-        .GroupPlayersByScore()
+    var groups = (await playerService
+        .GroupPlayersByScoreAsync(
+            CancellationToken.None))
         .ToList();
 
     if (groups.Count == 0)
@@ -289,15 +323,16 @@ void ListPlayersByScore()
     }
 }
 
-void FindPlayerByName()
+async Task FindPlayerByNameAsync()
 {
     Console.Write("Search by name: ");
 
     var term =
         Console.ReadLine() ?? string.Empty;
 
-    var player = playerService
-        .GetAllPlayers()
+    var player = (await playerService
+        .GetAllPlayersAsync(
+            CancellationToken.None))
         .FirstOrDefault(player =>
             player.Name.Equals(
                 term,
@@ -309,7 +344,7 @@ void FindPlayerByName()
             : player.ToString());
 }
 
-void FindPlayerById()
+async Task FindPlayerByIdAsync()
 {
     var playerId = PromptPlayerId();
 
@@ -318,8 +353,10 @@ void FindPlayerById()
         return;
     }
 
-    var player = playerService.FindPlayer(
-        playerId.Value);
+    var player = await playerService
+        .FindPlayerAsync(
+            playerId.Value,
+            CancellationToken.None);
 
     Console.WriteLine(
         player is null
@@ -327,7 +364,7 @@ void FindPlayerById()
             : player.ToString());
 }
 
-void DeletePlayer()
+async Task DeletePlayerAsync()
 {
     var playerId = PromptPlayerId();
 
@@ -336,8 +373,9 @@ void DeletePlayer()
         return;
     }
 
-    playerService.DeletePlayer(
-        playerId.Value);
+    await playerService.DeletePlayerAsync(
+        playerId.Value,
+        CancellationToken.None);
 
     Console.WriteLine(
         "Player deleted (if it existed).");
@@ -347,7 +385,7 @@ void DeletePlayer()
 
 #region Wallet Methods
 
-void AddWalletToPlayer()
+async Task AddWalletToPlayerAsync()
 {
     var playerId = PromptPlayerId();
 
@@ -373,13 +411,15 @@ void AddWalletToPlayer()
 
     try
     {
-        var walletId = GenerateWalletId();
+        var walletId =
+            await GenerateWalletIdAsync();
 
-        walletService.AddWalletToPlayer(
+        await walletService.AddWalletToPlayerAsync(
             walletId,
             playerId.Value,
             currency.Value,
-            balance.Value);
+            balance.Value,
+            CancellationToken.None);
 
         Console.WriteLine(
             "Wallet added successfully.");
@@ -407,7 +447,7 @@ void AddWalletToPlayer()
     }
 }
 
-void GetWalletsOfPlayer()
+async Task GetWalletsOfPlayerAsync()
 {
     var playerId = PromptPlayerId();
 
@@ -416,9 +456,11 @@ void GetWalletsOfPlayer()
         return;
     }
 
-    var wallets = walletService
-        .GetAllWalletsByPlayerId(
-            playerId.Value);
+    var wallets = (await walletService
+        .GetAllWalletsByPlayerIdAsync(
+            playerId.Value,
+            CancellationToken.None))
+        .ToList();
 
     if (wallets.Count == 0)
     {
@@ -437,18 +479,11 @@ void GetWalletsOfPlayer()
     }
 }
 
-void DepositToWallet()
+async Task DepositToWalletAsync()
 {
-    var playerId = PromptPlayerId();
+    var walletId = PromptWalletId();
 
-    if (playerId is null)
-    {
-        return;
-    }
-
-    var currency = PromptCurrency();
-
-    if (currency is null)
+    if (walletId is null)
     {
         return;
     }
@@ -461,30 +496,23 @@ void DepositToWallet()
         return;
     }
 
-    RunWalletOperation(() =>
+    await RunWalletOperationAsync(async () =>
     {
-        walletService.Deposit(
-            playerId.Value,
-            currency.Value,
-            amount.Value);
+        await walletService.DepositAsync(
+            walletId.Value,
+            amount.Value,
+            CancellationToken.None);
 
         Console.WriteLine(
             "Deposit successful.");
     });
 }
 
-void WithdrawFromWallet()
+async Task WithdrawFromWalletAsync()
 {
-    var playerId = PromptPlayerId();
+    var walletId = PromptWalletId();
 
-    if (playerId is null)
-    {
-        return;
-    }
-
-    var currency = PromptCurrency();
-
-    if (currency is null)
+    if (walletId is null)
     {
         return;
     }
@@ -497,84 +525,63 @@ void WithdrawFromWallet()
         return;
     }
 
-    RunWalletOperation(() =>
+    await RunWalletOperationAsync(async () =>
     {
-        walletService.Withdraw(
-            playerId.Value,
-            currency.Value,
-            amount.Value);
+        await walletService.WithdrawAsync(
+            walletId.Value,
+            amount.Value,
+            CancellationToken.None);
 
         Console.WriteLine(
             "Withdrawal successful.");
     });
 }
 
-void BlockWallet()
+async Task BlockWalletAsync()
 {
-    var playerId = PromptPlayerId();
+    var walletId = PromptWalletId();
 
-    if (playerId is null)
+    if (walletId is null)
     {
         return;
     }
 
-    var currency = PromptCurrency();
-
-    if (currency is null)
+    await RunWalletOperationAsync(async () =>
     {
-        return;
-    }
-
-    RunWalletOperation(() =>
-    {
-        walletService.Block(
-            playerId.Value,
-            currency.Value);
+        await walletService.BlockAsync(
+            walletId.Value,
+            CancellationToken.None);
 
         Console.WriteLine(
             "Wallet blocked.");
     });
 }
 
-void UnblockWallet()
+async Task UnblockWalletAsync()
 {
-    var playerId = PromptPlayerId();
+    var walletId = PromptWalletId();
 
-    if (playerId is null)
+    if (walletId is null)
     {
         return;
     }
 
-    var currency = PromptCurrency();
-
-    if (currency is null)
+    await RunWalletOperationAsync(async () =>
     {
-        return;
-    }
-
-    RunWalletOperation(() =>
-    {
-        walletService.Unblock(
-            playerId.Value,
-            currency.Value);
+        await walletService.UnblockAsync(
+            walletId.Value,
+            CancellationToken.None);
 
         Console.WriteLine(
             "Wallet unblocked.");
     });
 }
 
-void UpdateWalletBalance()
+async Task UpdateWalletBalanceAsync()
 {
-    var playerId = PromptPlayerId();
+    var walletId = PromptWalletId();
 
-    if (playerId is null)
-    {
-        return;
-    }
-
-    var currency = PromptCurrency();
-
-    if (currency is null)
+    if (walletId is null)
     {
         return;
     }
@@ -587,12 +594,12 @@ void UpdateWalletBalance()
         return;
     }
 
-    RunWalletOperation(() =>
+    await RunWalletOperationAsync(async () =>
     {
-        walletService.UpdateBalance(
-            playerId.Value,
-            currency.Value,
-            newBalance.Value);
+        await walletService.UpdateBalanceAsync(
+            walletId.Value,
+            newBalance.Value,
+            CancellationToken.None);
 
         Console.WriteLine(
             "Balance updated.");
