@@ -39,6 +39,6 @@ namespace WorldRank.Application.Interfaces
             int playerId,
             Currency currency);
 
-        void SaveChanges();
+        void Update(Wallet wallet);
     }
 }

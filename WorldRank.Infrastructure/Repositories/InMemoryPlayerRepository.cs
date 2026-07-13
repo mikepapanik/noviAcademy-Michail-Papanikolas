@@ -1,4 +1,3 @@
-using NLog;
 using WorldRank.Application.Interfaces;
 using WorldRank.Domain.Player;
 
@@ -6,7 +5,6 @@ namespace WorldRank.Infrastructure.Repositories
 {
 	public class InMemoryPlayerRepository : IPlayerRepository
 	{
-		private static readonly Logger _logger = LogManager.GetCurrentClassLogger();
 
 		private List<Player> _players;
 
@@ -18,7 +16,6 @@ namespace WorldRank.Infrastructure.Repositories
 		public void AddPlayer(Player player)
 		{
 			_players.Add(player);
-			_logger.Info("Player {PlayerId} ({Name}) added with score {Score}", player.Id, player.Name, player.Score);
 		}
 
 		public IEnumerable<Player> GetAllPlayers()
@@ -33,12 +30,10 @@ namespace WorldRank.Infrastructure.Repositories
 
 			if (player is null)
 			{
-				_logger.Warn("Delete skipped: player {PlayerId} not found", playerId);
 				return;
 			}
 
 			_players.Remove(player);
-			_logger.Info("Player {PlayerId} deleted", playerId);
 		}
 
 		public Player? FindPlayer(int playerId)

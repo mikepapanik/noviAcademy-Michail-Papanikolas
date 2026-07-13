@@ -1,5 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
-using NLog;
+﻿using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
 using WorldRank.Application.Interfaces;
 using WorldRank.Domain.Enums;
 using WorldRank.Domain.Exceptions;
@@ -10,8 +10,6 @@ namespace WorldRank.Infrastructure.Repositories;
 
 public class DBWalletRepository : IWalletRepository
 {
-    private static readonly Logger _logger =
-        LogManager.GetCurrentClassLogger();
 
     private readonly WorldRankDbContext _dbContext;
 
@@ -22,26 +20,23 @@ public class DBWalletRepository : IWalletRepository
 
     public void Add(Wallet wallet)
     {
-        var exists = _dbContext.Wallets.Any(item =>
-            item.PlayerId == wallet.PlayerId &&
-            item.Currency == wallet.Currency);
-
-        if (exists)
+        try
         {
+            _dbContext.Wallets.Add(wallet);
+            _dbContext.SaveChanges();
+        }
+        catch (DbUpdateException ex)
+            when (ex.InnerException is SqlException sqlException &&
+                  (sqlException.Number == 2601 ||
+                   sqlException.Number == 2627))
+        {
+            _dbContext.Entry(wallet).State =
+                EntityState.Detached;
+
             throw new DuplicateWalletException(
                 wallet.PlayerId,
                 wallet.Currency);
         }
-
-        _dbContext.Wallets.Add(wallet);
-        _dbContext.SaveChanges();
-
-        _logger.Info(
-            "Wallet {WalletId} created in database for player {PlayerId} in {Currency} with balance {Balance}",
-            wallet.Id,
-            wallet.PlayerId,
-            wallet.Currency,
-            wallet.Balance);
     }
 
     public Wallet GetWallet(
@@ -92,11 +87,7 @@ public class DBWalletRepository : IWalletRepository
 
         _dbContext.SaveChanges();
 
-        _logger.Info(
-            "Wallet balance updated in database for player {PlayerId} in {Currency}. New balance {Balance}",
-            playerId,
-            currency,
-            newBalance);
+
     }
 
     public void Deposit(
@@ -112,11 +103,7 @@ public class DBWalletRepository : IWalletRepository
 
         _dbContext.SaveChanges();
 
-        _logger.Info(
-            "Deposit completed in database for player {PlayerId} in {Currency}. Amount {Amount}",
-            playerId,
-            currency,
-            amount);
+
     }
 
     public void Withdraw(
@@ -132,11 +119,7 @@ public class DBWalletRepository : IWalletRepository
 
         _dbContext.SaveChanges();
 
-        _logger.Info(
-            "Withdraw completed in database for player {PlayerId} in {Currency}. Amount {Amount}",
-            playerId,
-            currency,
-            amount);
+
     }
 
     public void Block(
@@ -151,10 +134,7 @@ public class DBWalletRepository : IWalletRepository
 
         _dbContext.SaveChanges();
 
-        _logger.Info(
-            "Wallet blocked in database for player {PlayerId} in {Currency}",
-            playerId,
-            currency);
+
     }
 
     public void Unblock(
@@ -169,14 +149,12 @@ public class DBWalletRepository : IWalletRepository
 
         _dbContext.SaveChanges();
 
-        _logger.Info(
-            "Wallet unblocked in database for player {PlayerId} in {Currency}",
-            playerId,
-            currency);
+
     }
 
-    public void SaveChanges()
+    public void Update(Wallet wallet)
     {
+        _dbContext.Wallets.Update(wallet);
         _dbContext.SaveChanges();
     }
 

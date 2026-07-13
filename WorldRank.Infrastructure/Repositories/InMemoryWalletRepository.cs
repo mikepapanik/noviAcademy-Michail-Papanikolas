@@ -1,4 +1,3 @@
-using NLog;
 using WorldRank.Application.Interfaces;
 using WorldRank.Domain.Enums;
 using WorldRank.Domain.Exceptions;
@@ -8,8 +7,6 @@ namespace WorldRank.Infrastructure.Repositories
 {
     public class InMemoryWalletRepository : IWalletRepository
     {
-        private static readonly Logger _logger =
-            LogManager.GetCurrentClassLogger();
 
         private readonly List<Wallet> _wallets =
             new List<Wallet>();
@@ -29,11 +26,6 @@ namespace WorldRank.Infrastructure.Repositories
 
             _wallets.Add(wallet);
 
-            _logger.Info(
-                "Wallet created for player {PlayerId} in {Currency} with balance {Balance}",
-                wallet.PlayerId,
-                wallet.Currency,
-                wallet.Balance);
         }
 
         public Wallet GetWallet(
@@ -78,11 +70,6 @@ namespace WorldRank.Infrastructure.Repositories
 
             wallet.SetBalance(newBalance);
 
-            _logger.Info(
-                "Wallet balance updated for player {PlayerId} in {Currency}. New balance {Balance}",
-                playerId,
-                currency,
-                newBalance);
         }
 
         public void Deposit(
@@ -96,11 +83,6 @@ namespace WorldRank.Infrastructure.Repositories
 
             wallet.Deposit(amount);
 
-            _logger.Info(
-                "Deposit completed for player {PlayerId} in {Currency}. Amount {Amount}",
-                playerId,
-                currency,
-                amount);
         }
 
         public void Withdraw(
@@ -114,11 +96,7 @@ namespace WorldRank.Infrastructure.Repositories
 
             wallet.Withdraw(amount);
 
-            _logger.Info(
-                "Withdraw completed for player {PlayerId} in {Currency}. Amount {Amount}",
-                playerId,
-                currency,
-                amount);
+
         }
 
         public void Block(
@@ -131,10 +109,7 @@ namespace WorldRank.Infrastructure.Repositories
 
             wallet.Block();
 
-            _logger.Info(
-                "Wallet blocked for player {PlayerId} in {Currency}",
-                playerId,
-                currency);
+
         }
 
         public void Unblock(
@@ -147,15 +122,18 @@ namespace WorldRank.Infrastructure.Repositories
 
             wallet.Unblock();
 
-            _logger.Info(
-                "Wallet unblocked for player {PlayerId} in {Currency}",
-                playerId,
-                currency);
+
         }
 
-        public void SaveChanges()
+        public void Update(Wallet wallet)
         {
-            // No persistence is required for the in-memory implementation.
+            var index = _wallets.FindIndex(item =>
+                item.Id == wallet.Id);
+
+            if (index >= 0)
+            {
+                _wallets[index] = wallet;
+            }
         }
     }
 }
