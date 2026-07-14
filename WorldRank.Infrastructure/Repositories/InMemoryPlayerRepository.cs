@@ -55,5 +55,19 @@ namespace WorldRank.Infrastructure.Repositories
 
             return Task.CompletedTask;
         }
+        public Task UpdatePlayerAsync(
+    Player player,
+    CancellationToken cancellationToken)
+        {
+            var index = _players.FindIndex(
+                existingPlayer => existingPlayer.Id == player.Id);
+
+            if (index >= 0)
+            {
+                _players[index] = player;
+            }
+
+            return Task.CompletedTask;
+        }
     }
 }

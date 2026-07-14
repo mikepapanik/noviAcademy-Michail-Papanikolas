@@ -1,7 +1,8 @@
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using WorldRank.Api.Dtos.Players;
-using WorldRank.Application.Services;
-using WorldRank.Domain.Player;
+using WorldRank.Application.Commands.Players;
+using WorldRank.Application.Queries.Players;
 
 namespace WorldRank.Api.Controllers;
 
@@ -9,19 +10,20 @@ namespace WorldRank.Api.Controllers;
 [Route("players")]
 public class PlayersController : ControllerBase
 {
-    private readonly PlayerService _playerService;
+    private readonly ISender _sender;
 
-    public PlayersController(PlayerService playerService)
+    public PlayersController(ISender sender)
     {
-        _playerService = playerService;
+        _sender = sender;
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+        CancellationToken cancellationToken)
     {
-        var players = await _playerService
-            .GetAllPlayersAsync(
-                cancellationToken);
+        var players = await _sender.Send(
+            new GetAllPlayersQuery(),
+            cancellationToken);
 
         var response = players
             .Select(player => new PlayerResponse(
@@ -34,9 +36,13 @@ public class PlayersController : ControllerBase
     }
 
     [HttpGet("{id:int}")]
-    public async Task<IActionResult> GetById(int id,CancellationToken cancellationToken)
+    public async Task<IActionResult> GetById(
+        int id,
+        CancellationToken cancellationToken)
     {
-        var player = await _playerService.FindPlayerAsync(id,cancellationToken);
+        var player = await _sender.Send(
+            new GetPlayerByIdQuery(id),
+            cancellationToken);
 
         if (player is null)
         {
@@ -52,28 +58,52 @@ public class PlayersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Create([FromBody] CreatePlayerRequest request,CancellationToken cancellationToken)
+    public async Task<IActionResult> Create(
+        [FromBody] CreatePlayerRequest request,
+        CancellationToken cancellationToken)
     {
-        var player = new Player(
-            request.Id,
-            request.Name);
-
-        player.AddScore(request.Score);
-
-        var createdPlayer = await _playerService
-            .AddPlayerAsync(
-                player,
-                cancellationToken);
+        await _sender.Send(
+            new CreatePlayerCommand(
+                request.Id,
+                request.Name,
+                request.Score),
+            cancellationToken);
 
         var response = new PlayerResponse(
-            createdPlayer.Id,
-            createdPlayer.Name,
-            createdPlayer.Score);
+            request.Id,
+            request.Name,
+            request.Score);
 
         return CreatedAtAction(
             nameof(GetById),
-            new { id = createdPlayer.Id },
+            new { id = request.Id },
             response);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(
+        int id,
+        [FromBody] UpdatePlayerRequest request,
+        CancellationToken cancellationToken)
+    {
+        var updated = await _sender.Send(
+            new UpdatePlayerCommand(
+                id,
+                request.Name,
+                request.Score),
+            cancellationToken);
+
+        if (!updated)
+        {
+            return NotFound();
+        }
+
+        var response = new PlayerResponse(
+            id,
+            request.Name,
+            request.Score);
+
+        return Ok(response);
     }
 
     [HttpDelete("{id:int}")]
@@ -81,14 +111,14 @@ public class PlayersController : ControllerBase
         int id,
         CancellationToken cancellationToken)
     {
-        var player = await _playerService.FindPlayerAsync(id,cancellationToken);
+        var deleted = await _sender.Send(
+            new DeletePlayerCommand(id),
+            cancellationToken);
 
-        if (player is null)
+        if (!deleted)
         {
             return NotFound();
         }
-
-        await _playerService.DeletePlayerAsync(id,cancellationToken);
 
         return NoContent();
     }

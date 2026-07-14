@@ -1,6 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using WorldRank.Api.Dtos.Wallets;
-using WorldRank.Application.Services;
+using WorldRank.Application.Commands.Wallets;
+using WorldRank.Application.Queries.Wallets;
 using WorldRank.Domain.Exceptions;
 
 namespace WorldRank.Api.Controllers;
@@ -9,18 +11,21 @@ namespace WorldRank.Api.Controllers;
 [Route("wallets")]
 public class WalletsController : ControllerBase
 {
-    private readonly WalletService _walletService;
+    private readonly ISender _sender;
 
-    public WalletsController(WalletService walletService)
+    public WalletsController(ISender sender)
     {
-        _walletService = walletService;
+        _sender = sender;
     }
 
     [HttpGet("player/{playerId:int}")]
-    public async Task<IActionResult> GetAll(int playerId,CancellationToken cancellationToken)
+    public async Task<IActionResult> GetAll(
+        int playerId,
+        CancellationToken cancellationToken)
     {
-        var wallets = await _walletService
-            .GetAllWalletsByPlayerIdAsync(playerId,cancellationToken);
+        var wallets = await _sender.Send(
+            new GetWalletsByPlayerIdQuery(playerId),
+            cancellationToken);
 
         var response = wallets
             .Select(wallet => new WalletResponse(
@@ -39,10 +44,9 @@ public class WalletsController : ControllerBase
         int id,
         CancellationToken cancellationToken)
     {
-        var wallet = await _walletService
-            .GetWalletByIdAsync(
-                id,
-                cancellationToken);
+        var wallet = await _sender.Send(
+            new GetWalletByIdQuery(id),
+            cancellationToken);
 
         if (wallet is null)
         {
@@ -66,24 +70,24 @@ public class WalletsController : ControllerBase
     {
         try
         {
-            var wallet = await _walletService
-                .AddWalletToPlayerAsync(
+            await _sender.Send(
+                new CreateWalletCommand(
                     request.Id,
                     request.PlayerId,
                     request.Currency,
-                    request.Balance,
-                    cancellationToken);
+                    request.Balance),
+                cancellationToken);
 
             var response = new WalletResponse(
-                wallet.Id,
-                wallet.PlayerId,
-                wallet.Currency,
-                wallet.Balance,
-                wallet.IsBlocked);
+                request.Id,
+                request.PlayerId,
+                request.Currency,
+                request.Balance,
+                false);
 
             return CreatedAtAction(
                 nameof(GetById),
-                new { id = wallet.Id },
+                new { id = request.Id },
                 response);
         }
         catch (PlayerNotFoundException exception)
@@ -111,11 +115,11 @@ public class WalletsController : ControllerBase
     {
         try
         {
-            var wallet = await _walletService
-                .DepositAsync(
+            var wallet = await _sender.Send(
+                new DepositWalletCommand(
                     id,
-                    request.Amount,
-                    cancellationToken);
+                    request.Amount),
+                cancellationToken);
 
             var response = new WalletResponse(
                 wallet.Id,
@@ -146,9 +150,10 @@ public class WalletsController : ControllerBase
     {
         try
         {
-            await _walletService.WithdrawAsync(
-                id,
-                request.Amount,
+            await _sender.Send(
+                new WithdrawWalletCommand(
+                    id,
+                    request.Amount),
                 cancellationToken);
 
             return NoContent();
@@ -172,8 +177,8 @@ public class WalletsController : ControllerBase
     {
         try
         {
-            await _walletService.BlockAsync(
-                id,
+            await _sender.Send(
+                new BlockWalletCommand(id),
                 cancellationToken);
 
             return NoContent();
@@ -192,8 +197,8 @@ public class WalletsController : ControllerBase
     {
         try
         {
-            await _walletService.UnblockAsync(
-                id,
+            await _sender.Send(
+                new UnblockWalletCommand(id),
                 cancellationToken);
 
             return NoContent();

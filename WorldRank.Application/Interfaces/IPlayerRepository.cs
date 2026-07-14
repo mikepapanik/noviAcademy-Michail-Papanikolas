@@ -15,6 +15,10 @@ public interface IPlayerRepository
         int playerId,
         CancellationToken cancellationToken);
 
+    Task UpdatePlayerAsync(
+        Player player,
+        CancellationToken cancellationToken);
+
     Task DeletePlayerAsync(
         int playerId,
         CancellationToken cancellationToken);

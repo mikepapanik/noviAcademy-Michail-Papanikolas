@@ -7,8 +7,6 @@ namespace WorldRank.Infrastructure.Repositories;
 
 public class DBPlayerRepository : IPlayerRepository
 {
-
-
     private readonly WorldRankDbContext _dbContext;
 
     public DBPlayerRepository(WorldRankDbContext dbContext)
@@ -16,41 +14,53 @@ public class DBPlayerRepository : IPlayerRepository
         _dbContext = dbContext;
     }
 
-    public async Task AddPlayerAsync(Player player,CancellationToken cancellationToken)
+    public async Task AddPlayerAsync(
+        Player player,
+        CancellationToken cancellationToken)
     {
-        await _dbContext.Players.AddAsync(player,cancellationToken);
+        await _dbContext.Players.AddAsync(
+            player,
+            cancellationToken);
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _dbContext.SaveChangesAsync(
+            cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Player>> GetAllPlayersAsync(CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Player>> GetAllPlayersAsync(
+        CancellationToken cancellationToken)
     {
         return await _dbContext.Players
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<Player?> FindPlayerAsync(int playerId,CancellationToken cancellationToken)
+    public async Task<Player?> FindPlayerAsync(
+        int playerId,
+        CancellationToken cancellationToken)
     {
         return await _dbContext.Players
             .AsNoTracking()
             .FirstOrDefaultAsync(
-                player => player.Id == playerId,cancellationToken);
+                player => player.Id == playerId,
+                cancellationToken);
     }
 
-    public async Task DeletePlayerAsync(int playerId,CancellationToken cancellationToken)
+    public async Task DeletePlayerAsync(
+        int playerId,
+        CancellationToken cancellationToken)
     {
-        var player = await _dbContext.Players
-            .FirstOrDefaultAsync(
-                item => item.Id == playerId,cancellationToken);
+        await _dbContext.Players
+            .Where(player => player.Id == playerId)
+            .ExecuteDeleteAsync(cancellationToken);
+    }
 
-        if (player is null)
-        {
-            return;
-        }
+    public async Task UpdatePlayerAsync(
+        Player player,
+        CancellationToken cancellationToken)
+    {
+        _dbContext.Players.Update(player);
 
-        _dbContext.Players.Remove(player);
-
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        await _dbContext.SaveChangesAsync(
+            cancellationToken);
     }
 }
