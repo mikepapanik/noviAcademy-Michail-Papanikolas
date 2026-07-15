@@ -2,7 +2,9 @@
 using Microsoft.Extensions.Logging;
 using NLog.Extensions.Logging;
 using WorldRank.Application;
+using WorldRank.Application.Caching;
 using WorldRank.Infrastructure;
+using WorldRank.Infrastructure.Caching;
 
 namespace WorldRank;
 
@@ -19,6 +21,9 @@ public static class DependencyInjection
 
         services.AddApplication();
         services.AddInfrastructure();
+
+        services.AddMemoryCache();
+        services.AddSingleton<ICache, MemoryCacheStore>();
 
         return services;
     }

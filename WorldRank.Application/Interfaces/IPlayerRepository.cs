@@ -1,17 +1,25 @@
 ﻿using WorldRank.Domain.Player;
 
-namespace WorldRank.Application.Interfaces
+namespace WorldRank.Application.Interfaces;
+
+public interface IPlayerRepository
 {
-    public interface IPlayerRepository
-    {
-        void AddPlayer(Player player);
+    Task AddPlayerAsync(
+        Player player,
+        CancellationToken cancellationToken);
 
-        IEnumerable<Player> GetAllPlayers();
+    Task<IReadOnlyList<Player>> GetAllPlayersAsync(
+        CancellationToken cancellationToken);
 
-        void DeletePlayer(int playerId);
+    Task<Player?> FindPlayerAsync(
+        int playerId,
+        CancellationToken cancellationToken);
 
-        Player? FindPlayer(int playerId);
+    Task UpdatePlayerAsync(
+        Player player,
+        CancellationToken cancellationToken);
 
-        IEnumerable<IGrouping<int, Player>> GroupPlayersByScore();
-    }
+    Task DeletePlayerAsync(
+        int playerId,
+        CancellationToken cancellationToken);
 }

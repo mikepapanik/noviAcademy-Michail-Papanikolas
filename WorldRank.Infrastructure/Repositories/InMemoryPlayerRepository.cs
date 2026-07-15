@@ -3,49 +3,71 @@ using WorldRank.Domain.Player;
 
 namespace WorldRank.Infrastructure.Repositories
 {
-	public class InMemoryPlayerRepository : IPlayerRepository
-	{
+    public class InMemoryPlayerRepository : IPlayerRepository
+    {
 
-		private List<Player> _players;
+        private readonly List<Player> _players = [];
 
-		public InMemoryPlayerRepository()
-		{
-			_players = new List<Player>();
-		}
+        public InMemoryPlayerRepository()
+        {
+            _players = new List<Player>();
+        }
 
-		public void AddPlayer(Player player)
-		{
-			_players.Add(player);
-		}
+        public Task AddPlayerAsync(Player player, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
 
-		public IEnumerable<Player> GetAllPlayers()
-		{
-			// Return a copy so callers cannot mutate the repository's internal list.
-			return _players.ToList();
-		}
+            _players.Add(player);
 
-		public void DeletePlayer(int playerId)
-		{
-			var player = _players.Where(item => item.Id == playerId).FirstOrDefault();
+            return Task.CompletedTask;
+        }
 
-			if (player is null)
-			{
-				return;
-			}
+        public Task<IReadOnlyList<Player>> GetAllPlayersAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
 
-			_players.Remove(player);
-		}
+            IReadOnlyList<Player> players =
+                _players.ToList();
 
-		public Player? FindPlayer(int playerId)
-		{
-			return _players.Where(item => item.Id == playerId).FirstOrDefault();
-		}
+            return Task.FromResult(players);
+        }
 
-		public IEnumerable<IGrouping<int, Player>> GroupPlayersByScore()
-		{
-			return _players
-				.GroupBy(player => player.Score)
-				.OrderByDescending(group => group.Key);
-		}
-	}
+        public Task<Player?> FindPlayerAsync(int playerId, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var player = _players.FirstOrDefault(item => item.Id == playerId);
+
+            return Task.FromResult(player);
+        }
+
+        public Task DeletePlayerAsync(int playerId, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var player = _players.FirstOrDefault(
+                item => item.Id == playerId);
+
+            if (player is not null)
+            {
+                _players.Remove(player);
+            }
+
+            return Task.CompletedTask;
+        }
+        public Task UpdatePlayerAsync(
+    Player player,
+    CancellationToken cancellationToken)
+        {
+            var index = _players.FindIndex(
+                existingPlayer => existingPlayer.Id == player.Id);
+
+            if (index >= 0)
+            {
+                _players[index] = player;
+            }
+
+            return Task.CompletedTask;
+        }
+    }
 }

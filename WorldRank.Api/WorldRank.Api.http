@@ -1,0 +1,106 @@
+@WorldRank.Api_HostAddress = http://localhost:5050
+
+### 1. Create player
+POST {{WorldRank.Api_HostAddress}}/players
+Content-Type: application/json
+
+{
+  "id": 9001,
+  "name": "Michail",
+  "score": 100
+}
+
+### 2. Get player by id
+GET {{WorldRank.Api_HostAddress}}/players/9001
+Accept: application/json
+
+### 3. Get player by id again - cache hit
+GET {{WorldRank.Api_HostAddress}}/players/9001
+Accept: application/json
+
+### 4. Get all players - first request
+GET {{WorldRank.Api_HostAddress}}/players
+Accept: application/json
+
+### 5. Get all players again - cache hit
+GET {{WorldRank.Api_HostAddress}}/players
+Accept: application/json
+
+### 6. Create second player - invalidates players list cache
+POST {{WorldRank.Api_HostAddress}}/players
+Content-Type: application/json
+
+{
+  "id": 9002,
+  "name": "Anna",
+  "score": 80
+}
+
+### 7. Get all players after create
+GET {{WorldRank.Api_HostAddress}}/players
+Accept: application/json
+
+### 8. Get all players again - cache hit
+GET {{WorldRank.Api_HostAddress}}/players
+Accept: application/json
+
+### 9. Create wallet
+POST {{WorldRank.Api_HostAddress}}/wallets
+Content-Type: application/json
+
+{
+  "id": 9101,
+  "playerId": 9001,
+  "currency": "EUR",
+  "balance": 100.00
+}
+
+### 10. Get wallet by id
+GET {{WorldRank.Api_HostAddress}}/wallets/9101
+Accept: application/json
+
+### 11. Get wallet again - cache hit
+GET {{WorldRank.Api_HostAddress}}/wallets/9101
+Accept: application/json
+
+### 12. Deposit funds
+POST {{WorldRank.Api_HostAddress}}/wallets/9101/deposit
+Content-Type: application/json
+
+{
+  "amount": 50.00
+}
+
+### 13. Get wallet after deposit
+GET {{WorldRank.Api_HostAddress}}/wallets/9101
+Accept: application/json
+
+### 14. Get wallets by player
+GET {{WorldRank.Api_HostAddress}}/wallets/player/9001
+Accept: application/json
+
+### 15. Get wallets by player again - cache hit
+GET {{WorldRank.Api_HostAddress}}/wallets/player/9001
+Accept: application/json
+
+### 16. Block wallet
+PATCH {{WorldRank.Api_HostAddress}}/wallets/9101/block
+
+### 17. Deposit into blocked wallet - should return 400
+POST {{WorldRank.Api_HostAddress}}/wallets/9101/deposit
+Content-Type: application/json
+
+{
+  "amount": 10.00
+}
+
+### 18. Unblock wallet
+PATCH {{WorldRank.Api_HostAddress}}/wallets/9101/unblock
+
+### 19. Wallet not found - should return 404
+GET {{WorldRank.Api_HostAddress}}/wallets/999999
+Accept: application/json
+
+### 20. Player not found - should return 404
+GET {{WorldRank.Api_HostAddress}}/players/999999
+Accept: application/json
