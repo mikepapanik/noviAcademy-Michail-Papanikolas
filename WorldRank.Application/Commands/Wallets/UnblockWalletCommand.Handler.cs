@@ -7,11 +7,14 @@ namespace WorldRank.Application.Commands.Wallets;
 public sealed class UnblockWalletCommandHandler
     : IRequestHandler<UnblockWalletCommand>
 {
+    private readonly IGetWalletByIdPersistence _getWalletByIdPersistence;
     private readonly IUpdateWalletPersistence _updateWalletPersistence;
 
     public UnblockWalletCommandHandler(
+        IGetWalletByIdPersistence getWalletByIdPersistence,
         IUpdateWalletPersistence updateWalletPersistence)
     {
+        _getWalletByIdPersistence = getWalletByIdPersistence;
         _updateWalletPersistence = updateWalletPersistence;
     }
 
@@ -19,7 +22,7 @@ public sealed class UnblockWalletCommandHandler
         UnblockWalletCommand request,
         CancellationToken cancellationToken)
     {
-        var wallet = await _updateWalletPersistence.GetByIdAsync(
+        var wallet = await _getWalletByIdPersistence.GetByIdAsync(
             request.WalletId,
             cancellationToken);
 

@@ -1,7 +1,6 @@
 using Autofac;
 using Autofac.Extensions.DependencyInjection;
 using WorldRank.Api;
-using WorldRank.Application;
 using WorldRank.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -12,7 +11,7 @@ builder.Host.UseServiceProviderFactory(
 builder.Host.ConfigureContainer<ContainerBuilder>(
     containerBuilder =>
     {
-        containerBuilder.RegisterModule<ApplicationModule>();
+        containerBuilder.RegisterModule<ApiModule>();
         containerBuilder.RegisterModule<InfrastructureModule>();
     });
 

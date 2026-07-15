@@ -8,11 +8,14 @@ namespace WorldRank.Application.Commands.Wallets;
 public sealed class DepositWalletCommandHandler
     : IRequestHandler<DepositWalletCommand, Wallet>
 {
+    private readonly IGetWalletByIdPersistence _getWalletByIdPersistence;
     private readonly IUpdateWalletPersistence _updateWalletPersistence;
 
     public DepositWalletCommandHandler(
+        IGetWalletByIdPersistence getWalletByIdPersistence,
         IUpdateWalletPersistence updateWalletPersistence)
     {
+        _getWalletByIdPersistence = getWalletByIdPersistence;
         _updateWalletPersistence = updateWalletPersistence;
     }
 
@@ -20,7 +23,7 @@ public sealed class DepositWalletCommandHandler
         DepositWalletCommand request,
         CancellationToken cancellationToken)
     {
-        var wallet = await _updateWalletPersistence.GetByIdAsync(
+        var wallet = await _getWalletByIdPersistence.GetByIdAsync(
             request.WalletId,
             cancellationToken);
 

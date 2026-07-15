@@ -15,15 +15,6 @@ public sealed class UpdateWalletPersistence
         _walletRepository = walletRepository;
     }
 
-    public async Task<Wallet?> GetByIdAsync(
-        int walletId,
-        CancellationToken cancellationToken)
-    {
-        return await _walletRepository.GetByIdAsync(
-            walletId,
-            cancellationToken);
-    }
-
     public async Task UpdateAsync(
         Wallet wallet,
         CancellationToken cancellationToken)

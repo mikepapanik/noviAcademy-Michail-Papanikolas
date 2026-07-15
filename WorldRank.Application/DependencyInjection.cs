@@ -1,6 +1,7 @@
 ﻿using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 using WorldRank.Application.Behaviors;
+using WorldRank.Application.Services;
 using WorldRank.Application.Strategies;
 
 namespace WorldRank.Application;
@@ -23,6 +24,9 @@ public static class DependencyInjection
         services.AddScoped<IFundsStrategy, AddFundsStrategy>();
         services.AddScoped<IFundsStrategy, SubtractFundsStrategy>();
         services.AddScoped<IFundsStrategy, ForceSubtractFundsStrategy>();
+
+        services.AddScoped<PlayerService>();
+        services.AddScoped<WalletService>();
 
         return services;
     }

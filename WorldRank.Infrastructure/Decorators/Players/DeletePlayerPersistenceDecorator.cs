@@ -25,11 +25,6 @@ public sealed class DeletePlayerPersistenceDecorator
             id,
             cancellationToken);
 
-        if (!deleted)
-        {
-            return false;
-        }
-
         await _cache.RemoveAsync(
             CacheKeys.PlayerById(id),
             cancellationToken);
@@ -38,6 +33,6 @@ public sealed class DeletePlayerPersistenceDecorator
             CacheKeys.AllPlayers,
             cancellationToken);
 
-        return true;
+        return deleted;
     }
 }

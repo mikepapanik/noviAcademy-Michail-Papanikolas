@@ -18,15 +18,6 @@ public sealed class UpdateWalletPersistenceDecorator
         _cache = cache;
     }
 
-    public Task<Wallet?> GetByIdAsync(
-        int walletId,
-        CancellationToken cancellationToken)
-    {
-        return _inner.GetByIdAsync(
-            walletId,
-            cancellationToken);
-    }
-
     public async Task UpdateAsync(
         Wallet wallet,
         CancellationToken cancellationToken)
@@ -35,8 +26,10 @@ public sealed class UpdateWalletPersistenceDecorator
             wallet,
             cancellationToken);
 
-        await _cache.RemoveAsync(
+        await _cache.SetAsync(
             CacheKeys.WalletById(wallet.Id),
+            wallet,
+            TimeSpan.FromMinutes(5),
             cancellationToken);
 
         await _cache.RemoveAsync(

@@ -31,8 +31,10 @@ public sealed class UpdatePlayerPersistenceDecorator
             return false;
         }
 
-        await _cache.RemoveAsync(
+        await _cache.SetAsync(
             CacheKeys.PlayerById(player.Id),
+            player,
+            TimeSpan.FromMinutes(5),
             cancellationToken);
 
         await _cache.RemoveAsync(

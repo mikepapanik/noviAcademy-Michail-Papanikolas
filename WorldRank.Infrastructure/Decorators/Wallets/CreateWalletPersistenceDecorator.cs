@@ -26,8 +26,10 @@ public sealed class CreateWalletPersistenceDecorator
             wallet,
             cancellationToken);
 
-        await _cache.RemoveAsync(
+        await _cache.SetAsync(
             CacheKeys.WalletById(wallet.Id),
+            wallet,
+            TimeSpan.FromMinutes(5),
             cancellationToken);
 
         await _cache.RemoveAsync(
