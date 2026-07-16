@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using WorldRank.Domain.CurrencyRates;
 using WorldRank.Domain.Player;
 using WorldRank.Domain.Wallets;
 
@@ -9,6 +10,9 @@ public class WorldRankDbContext : DbContext
     public DbSet<Player> Players => Set<Player>();
 
     public DbSet<Wallet> Wallets => Set<Wallet>();
+
+    public DbSet<CurrencyRates> CurrencyRates =>
+        Set<CurrencyRates>();
 
     public WorldRankDbContext(
         DbContextOptions<WorldRankDbContext> options)
@@ -72,6 +76,32 @@ public class WorldRankDbContext : DbContext
                 wallet.Currency
             })
             .IsUnique();
+        });
+
+        modelBuilder.Entity<CurrencyRates>(entity =>
+        {
+            entity.ToTable("CurrencyRates");
+
+            entity.HasKey(currencyRate => new
+            {
+                currencyRate.Currency,
+                currencyRate.Date
+            });
+
+            entity.Property(currencyRate =>
+                    currencyRate.Currency)
+                .HasMaxLength(3)
+                .IsRequired();
+
+            entity.Property(currencyRate =>
+                    currencyRate.Rate)
+                .HasPrecision(18, 8)
+                .IsRequired();
+
+            entity.Property(currencyRate =>
+                    currencyRate.Date)
+                .HasColumnType("date")
+                .IsRequired();
         });
 
         base.OnModelCreating(modelBuilder);

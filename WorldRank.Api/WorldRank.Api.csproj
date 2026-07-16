@@ -9,12 +9,18 @@
   <ItemGroup>
     <PackageReference Include="Autofac.Extensions.DependencyInjection" Version="11.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Quartz.Extensions.Hosting" Version="3.18.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\WorldRank.Application\WorldRank.Application.csproj" />
     <ProjectReference Include="..\WorldRank.Domain\WorldRank.Domain.csproj" />
+    <ProjectReference Include="..\WorldRank.Gateway\WorldRank.Gateway.csproj" />
     <ProjectReference Include="..\WorldRank.Infrastructure\WorldRank.Infrastructure.csproj" />
   </ItemGroup>
 

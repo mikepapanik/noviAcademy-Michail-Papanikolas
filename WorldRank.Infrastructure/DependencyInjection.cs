@@ -26,6 +26,10 @@ public static class DependencyInjection
             IWalletRepository,
             DBWalletRepository>();
 
+        services.AddScoped<
+            ICurrencyRatesRepository,
+            DBCurrencyRatesRepository>();
+
         return services;
     }
 }
